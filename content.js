@@ -48,18 +48,33 @@ function stylePopup(popup, event) {
  * @param {string} text - The text to be saved.
  */
 function saveQuoteAction(text) {
+  let url = new URL(window.location.href);
+  let params = new URLSearchParams(url.search);
+
+  // Delete current url quote
+  params.delete("quote");
+
+  url.search = params.toString();
+  url = url.toString();
+
   const quote = {
-    id:window.crypto.randomUUID(),
+    id: window.crypto.randomUUID(),
     text,
-    url: window.location.href,
-    createdAt: new Date().toLocaleDateString('en-US', { year: 'numeric', day: 'numeric', month: 'long' }),
-    icon: document.querySelector("link[rel~='icon']")?.href || document.querySelector("link[rel~='favicon']")?.href,
+    url,
+    createdAt: new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      day: "numeric",
+      month: "long",
+    }),
+    icon:
+      document.querySelector("link[rel~='icon']")?.href ||
+      document.querySelector("link[rel~='favicon']")?.href,
     site: window.location.hostname,
     siteName: window.location.hostname.replace("www.", ""),
   };
-  chrome.runtime.sendMessage({ action: SAVE_ACTION, quote }, () => {
-    // Here can alert user that the quote has been saved
-  });
+  
+  chrome.runtime.sendMessage({ action: SAVE_ACTION, quote });
+  
   if (popup) {
     document.body.removeChild(popup); // Remove the popup after clicking
     popup = null; // Update popup status
