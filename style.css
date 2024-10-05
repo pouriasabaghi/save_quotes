@@ -223,11 +223,25 @@ h3 {
   top: 10px;
 }
 
-.quotes--item:nth-of-type(even) .delete-quote{
+.quotes--item:nth-of-type(even) .delete-quote {
   right: unset;
   left: 30px;
 }
 
-.intro{
+.intro {
   color: white;
+}
+
+[role="button"] {
+  cursor: pointer;
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  background: white;
+  font-size: 10px;
+  padding: 1px;
+  text-decoration: none;
 }

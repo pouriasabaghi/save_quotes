@@ -1,6 +1,7 @@
 const SAVE_BUTTON_ID = "saveTextBtn";
 const SAVE_ACTION = "saveText";
-
+const SAVE_ICON =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAQCAYAAADwMZRfAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAFTSURBVHgBnZNRTsJAEIZnlmkT9KVHgESJPllvUG7ADfQIPhqDARMxvoknsJ5AOAF6AnwzERM4Ai8q2nbHWUwTtFtt+Ztm9p92vmm6sxhP2iMACGBNMUCTlguGBwQdlinWiJ4CvDLrJUQpnFa2LsJMl/GRh/v9uc2/Px3XFNESomxdzAvJy+k02txo2fxvWSGu44w0863b+P46h+hm1f8L4WnXY+ZaHMdh6iUE/KEHkKMMRIp9E0nR4efzib9YLAwE0FEt4wtBUqGCjgQ/zxeClFEG4myf30dEdXM7r2+D6u7lbNXbIGRLVuvd2V/eCpHRDcz464SH7k6vb3Li7yR4eYUI7HEK0YDDCsCeJGqqgh0ZrIFLdCC+hYhhfn+UCx61TuaYpsw86Cgay5M5A/oCOZP/04UCwlUTTdqBJEZyImfU6NWhoH7sjtkZRriOkqQJJfQF4pmSATxp/IQAAAAASUVORK5CYII=";
 let popup; // Variable to hold the popup status
 
 /**
@@ -11,7 +12,9 @@ let popup; // Variable to hold the popup status
 function createPopup(event, selectedText) {
   // Create the popup div
   popup = document.createElement("div");
-  popup.innerHTML = `<button id=${SAVE_BUTTON_ID}>💾</button>`;
+  popup.innerHTML = `
+  <img id=${SAVE_BUTTON_ID} src="${SAVE_ICON}" />
+  `;
   stylePopup(popup, event); // Style the popup
   document.body.appendChild(popup); // Add the popup to the document body
 
@@ -35,12 +38,12 @@ function createPopup(event, selectedText) {
 function stylePopup(popup, event) {
   popup.style.position = "absolute";
   popup.style.top = `${event.pageY + 5}px`;
-  popup.style.left = `${event.pageX + 5}px`;
-  popup.style.background = "#f1f1f1";
+  popup.style.left = `${event.pageX + 10}px`;
+  popup.style.background = "#4c3f3f";
   popup.style.padding = "5px";
   popup.style.borderRadius = "5px";
-  popup.style.border = "1px solid #ccc";
   popup.style.zIndex = "1000";
+  popup.style.cursor = "pointer";
 }
 
 /**
@@ -72,9 +75,9 @@ function saveQuoteAction(text) {
     site: window.location.hostname,
     siteName: window.location.hostname.replace("www.", ""),
   };
-  
+
   chrome.runtime.sendMessage({ action: SAVE_ACTION, quote });
-  
+
   if (popup) {
     document.body.removeChild(popup); // Remove the popup after clicking
     popup = null; // Update popup status
@@ -192,6 +195,5 @@ function highlightQuote(quoteText) {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "highlightQuote") {
     highlightQuote(request.quoteText);
-    console.log("nice");
   }
 });
