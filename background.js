@@ -1,6 +1,6 @@
-chrome.storage.local.clear(() =>
+/* chrome.storage.local.clear(() =>
   console.log("All data cleared from chrome.storage.local.")
-);
+); */
 
 // Create context menu
 chrome.runtime.onInstalled.addListener(function () {
@@ -43,7 +43,6 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
         site,
         siteName: site.replace("www.", ""),
       };
-      console.log(quote);
 
       saveQuote(quote);
     }
