@@ -63,15 +63,17 @@ document.addEventListener("DOMContentLoaded", () => {
    * @returns {string} - The generated HTML string for the quote link.
    */
   function createQuoteLink(quote) {
-    const isCurrentUrl = quote.url === currentUrl;
+    const separator = quote.url.includes("?") ? "&" : "?";
     const encodedQuoteText = encodeURIComponent(quote.text);
+    const urlWithQoute  =  `${quote.url}${separator}quote=${encodedQuoteText}`
+    
+    const isCurrentUrl = urlWithQoute === currentUrl;
 
     if (isCurrentUrl) {
       return `<a data-quote="${quote.text}"  class="quotes--item-text" href="#">Visit Quote</a>`;
     }
 
-    const separator = quote.url.includes("?") ? "&" : "?";
-    return `<a data-quote="${quote.text}" class="quotes--item-text" target="_blank" href="${quote.url}${separator}quote=${encodedQuoteText}">Visit Quote</a>`;
+    return `<a data-quote="${quote.text}" class="quotes--item-text" target="_blank" href="${urlWithQoute}">Visit Quote</a>`;
   }
 
   /**

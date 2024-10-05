@@ -164,7 +164,7 @@ function highlightQuote(quoteText) {
       const span = document.createElement("span");
       span.style.fontWeight = "bolder";
       span.style.background = "rgb(140 124 63 / 30%)";
-      span.dataset.niceQuote = true;
+      span.dataset.saveQuote = true;
 
       // Save the original text
       const originalText = node.nodeValue;
