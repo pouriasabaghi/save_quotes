@@ -106,12 +106,26 @@ document.addEventListener("mouseup", (event) => {
 });
 
 // Focus on current quote
-window.addEventListener("load", () => {
+/* window.addEventListener("load", () => {
   const urlParams = new URLSearchParams(window.location.search);
   let quoteText = urlParams.get("quote");
   quoteText = decodeURIComponent(quoteText);
 
   highlightQuote(quoteText);
+}); */
+
+window.addEventListener("load", () => {
+  const currentUrl = window.location.href;
+
+  chrome.storage.local.get(["quotes"], (result) => {
+    const quotes = result["quotes"];
+
+    const quoteText = quotes?.find(({ url }) => {
+      return new URL(url).href === currentUrl;
+    })?.text;
+
+    quoteText && highlightQuote(quoteText);
+  });
 });
 
 function highlightQuote(quoteText) {
