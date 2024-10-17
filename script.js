@@ -90,7 +90,6 @@ document.addEventListener("DOMContentLoaded", () => {
               <div class="quotes--item-detail">
                 <h3>${quote.siteName}</h3>
                 <span>${quote.createdAt}</span>
-                <span>${quote.createdAt}</span>
               </div>
             </div>
             <div class="quotes--item-desc">
