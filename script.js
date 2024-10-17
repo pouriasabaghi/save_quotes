@@ -65,15 +65,15 @@ document.addEventListener("DOMContentLoaded", () => {
   function createQuoteLink(quote) {
     const separator = quote.url.includes("?") ? "&" : "?";
     const encodedQuoteText = encodeURIComponent(quote.text);
-    const urlWithQoute  =  `${quote.url}${separator}quote=${encodedQuoteText}`
+    const urlWithQuote  =  `${quote.url}${separator}quote=${encodedQuoteText}`
     
-    const isCurrentUrl = urlWithQoute === currentUrl;
+    const isCurrentUrl = urlWithQuote === currentUrl;
 
     if (isCurrentUrl) {
-      return `<a data-quote="${quote.text}"  class="quotes--item-text" href="#">Visit Quote</a>`;
+      return `<a data-quote="${quote.text}"  class="quotes--item-link" href="#">Visit Quote</a>`;
     }
 
-    return `<a data-quote="${quote.text}" class="quotes--item-text" target="_blank" href="${urlWithQoute}">Visit Quote</a>`;
+    return `<a data-quote="${quote.text}" class="quotes--item-link" target="_blank" href="${urlWithQuote}">Visit Quote</a>`;
   }
 
   /**
@@ -84,26 +84,26 @@ document.addEventListener("DOMContentLoaded", () => {
    */
   function createQuoteListItem(linkTag, quote) {
     return ` 
-      <li class="quotes--item quotes--header-label" 
-            style="--header-label-text:'${quote.createdAt}'">
-            <div class="thumb">
+      <li class="quotes--item quotes--header-label">
+            <div class="quotes--item-image">
             ${
               quote.icon
                 ? ` <img src="${quote.icon}" />`
-                : "<span class='no-thumb'>📑</span>"
+                : ` <span class='no-image'>📚</span>`
             }    
-            </div>
-            <div class="description">
-              <h3>${quote.siteName}</h3>
-              <div>
-                <p class="text-8-line-overflow">${quote.text}</p>
-              <br />
-                ${linkTag}
-                <small role="button" class='delete-quote' data-id="${
-                  quote.id
-                }">❌</small>
+              <div class="quotes--item-detail">
+                <h3>${quote.siteName}</h3>
+                <span>${quote.createdAt}</span>
               </div>
             </div>
+            <div class="quotes--item-desc">
+                <p class="text-line-overflow">${quote.text}</p>
+                ${linkTag}
+           
+            </div>
+                 <small role="button" class='delete-quote' data-id="${
+                   quote.id
+                 }">❌</small>
           </li>`;
   }
 
