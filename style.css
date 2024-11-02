@@ -12,12 +12,12 @@ a {
 }
 
 body {
-  background-color: #edf2fb;
+  background-color: #fefefe;
 }
 
 main {
   width: 600px;
-  padding: 1rem 1rem 1.5rem 1rem;
+  padding: 1rem 1rem 3rem 1rem;
 }
 
 .quotes {
@@ -27,21 +27,23 @@ main {
 }
 
 .quotes--item {
-  padding: 0.5rem;
-  border-radius: 4px;
-  background-color: #e2eafc;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background-color: #f9fafb;
   position: relative;
+  box-shadow: 0 0 17px 0 rgb(0 0 0 / 12%);
 }
 
 .quotes--item-link {
-  padding: 0.25rem;
+  padding: 0.5rem 3rem;
   color: white;
-  background-color: #749cfa;
-  border-radius: 0.25rem;
+  background-color: #101826;
+  border-radius: 0.5rem;
   font-size: 12px;
   transition: filter 500ms;
   margin-top: 1rem;
   display: inline-block;
+  font-weight: bold;
 }
 .quotes--item-link:hover {
   filter: brightness(1.1);
@@ -63,7 +65,6 @@ main {
 }
 
 .quotes--item-image .no-image {
-  background-color: #abc4ff;
   width: 30px;
   height: 30px;
   padding: 2.5px;
@@ -81,6 +82,7 @@ main {
 
 .quotes--item-detail span {
   font-size: 9px;
+  color: #979797;
 }
 .quotes--item-detail h3 {
   font-size: 20px;
@@ -94,8 +96,8 @@ main {
 
 .delete-quote {
   position: absolute;
-  right: 0.5rem;
-  top: 0.5rem;
+  right: 0.80rem;
+  top: 1.05rem;
   cursor: pointer;
   font-size: 20px;
   height: 12px;
@@ -115,6 +117,30 @@ footer {
   position: fixed;
   bottom: 0;
   left: 0;
+  right: 0;
+  margin: auto;
   background: white;
   width: 100%;
+  max-width: 600px;
+  height: 36px;
+  border-radius: 0.5rem 0.5rem 0 0;
+  display: flex;
+  align-items: center;
+  padding-left: 1rem;
+  box-shadow: 0 0 17px 0 rgb(0 0 0 / 12%);
+}
+
+footer span {
+  margin-left: 0.75rem;
+}
+
+footer a {
+  font-weight: bold;
+  color: black;
+  text-decoration: underline;
+}
+
+
+footer img{
+  vertical-align: middle;
 }

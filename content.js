@@ -1,7 +1,7 @@
 const SAVE_BUTTON_ID = "saveTextBtn";
 const SAVE_ACTION = "saveText";
 const SAVE_ICON =
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAQCAYAAADwMZRfAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAFTSURBVHgBnZNRTsJAEIZnlmkT9KVHgESJPllvUG7ADfQIPhqDARMxvoknsJ5AOAF6AnwzERM4Ai8q2nbHWUwTtFtt+Ztm9p92vmm6sxhP2iMACGBNMUCTlguGBwQdlinWiJ4CvDLrJUQpnFa2LsJMl/GRh/v9uc2/Px3XFNESomxdzAvJy+k02txo2fxvWSGu44w0863b+P46h+hm1f8L4WnXY+ZaHMdh6iUE/KEHkKMMRIp9E0nR4efzib9YLAwE0FEt4wtBUqGCjgQ/zxeClFEG4myf30dEdXM7r2+D6u7lbNXbIGRLVuvd2V/eCpHRDcz464SH7k6vb3Li7yR4eYUI7HEK0YDDCsCeJGqqgh0ZrIFLdCC+hYhhfn+UCx61TuaYpsw86Cgay5M5A/oCOZP/04UCwlUTTdqBJEZyImfU6NWhoH7sjtkZRriOkqQJJfQF4pmSATxp/IQAAAAASUVORK5CYII=";
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAEPSURBVHgBpZO9agJBFIXP3aRICJENaYRgSBeDCaxNXiAPEiwES20VLPUVBAvRQtFGbcRCwUIsbBREsBR/wHLf4Doz/qCu4rr7VXNn5hzOXOYSBLrX/0HgHBgGCDquwagxUcxcTaakxMwDW8JDCCYzBe8en15zojBwOw8EGPTi/WQ4RaTQ4AaGfn+6N+y38e57U+tGs43ZfIFI+F/Vs/kSxu/f0X1Lgp1Y4vE84zvwdfbsosGtWAwy2TxG48m+bjRb6Pb69g3iybQykZTKVbEuIJFM7eurBpKfgF81rFTZCHzbtxcrVgN3/0AlYJhwgcaEIRzCjLroAYUcpZAaoqgmR1KMZlAkqdkViqZ1pEZq1zYGWKqmSV/IAAAAAElFTkSuQmCC";
 let popup; // Variable to hold the popup status
 
 /**
@@ -70,6 +70,7 @@ function saveQuoteAction(text) {
       month: "long",
     }),
     icon:
+      document.querySelector("link[rel~='apple-touch-icon']")?.href ||
       document.querySelector("link[rel~='icon']")?.href ||
       document.querySelector("link[rel~='favicon']")?.href,
     site: window.location.hostname,

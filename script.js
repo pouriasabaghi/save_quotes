@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
   getFromStorage("quotes", (quotes) => {
     quotesUl.innerHTML =
       quotes && quotes.length
-        ? generateQuoteList(quotes)
+        ? generateQuoteList(quotes.reverse())
         : `<div class="intro">
               <p>You haven’t saved any quotes yet.</p>
               <p>  It’s super easy! Just highlight a part of the text you want, then click ‘Save icon’ on the popup, or right-click and choose ‘Save quote’ from the menu. Ta-da!</p>
@@ -66,10 +66,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const isCurrentUrl = new URL(quote.url).href === currentUrl;
 
     if (isCurrentUrl) {
-      return `<a data-quote="${quote.text}"  class="quotes--item-link" href="#">Visit Quote</a>`;
+      return `<a data-quote="${quote.text}"  class="quotes--item-link" href="#">Scroll to Quote</a>`;
     }
 
-    return `<a data-quote="${quote.text}" class="quotes--item-link" target="_blank" href="${quote.url}">Visit Quote</a>`;
+    return `<a data-quote="${quote.text}" class="quotes--item-link" target="_blank" href="${quote.url}">Check Quote</a>`;
   }
 
   /**
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ${
               quote.icon
                 ? ` <img src="${quote.icon}" />`
-                : ` <span class='no-image'>📚</span>`
+                : ` <span class='no-image'><img src="icon-48px.png" alt="save quote"/></span>`
             }    
               <div class="quotes--item-detail">
                 <h3>${quote.siteName}</h3>
@@ -99,7 +99,9 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
                  <small role="button" class='delete-quote' data-id="${
                    quote.id
-                 }">❌</small>
+                 }">
+                 <img src="/delete.svg" alt="delete" />
+                 </small>
           </li>`;
   }
 
@@ -134,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!confirm("Are you sure?")) return;
 
       getFromStorage("quotes", (quotes) => {
-        quotes = quotes.filter((quote) => quote.id != e.target.dataset.id);
+        quotes = quotes.filter((quote) => quote.id != e.target.closest('[data-id]').dataset.id);
         chrome.storage.local.set({ quotes }, function () {
           e.target.closest("li").remove();
           if (quotes.length === 0) window.close();
