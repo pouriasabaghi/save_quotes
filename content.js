@@ -70,6 +70,7 @@ function saveQuoteAction(text) {
       month: "long",
     }),
     icon:
+      document.querySelector("link[rel~='apple-touch-icon']")?.href ||
       document.querySelector("link[rel~='icon']")?.href ||
       document.querySelector("link[rel~='favicon']")?.href,
     site: window.location.hostname,
