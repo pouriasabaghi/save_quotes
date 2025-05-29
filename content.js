@@ -39,6 +39,9 @@ const TEXT_TYPES = {
 
 let popup; // Variable to hold the popup status
 
+// Store settings
+let settings = { popupEnabled: true };
+
 /**
  * Create and display a popup with options near the selected text.
  * @param {MouseEvent} event - The mouse event that triggered the popup.
@@ -224,8 +227,8 @@ function removePopupOnClickOutside(e) {
 // Event listener for mouseup events
 document.addEventListener("mouseup", (event) => {
   const selectedText = window.getSelection().toString().trim();
-  if (selectedText && !popup) {
-    createPopup(event, selectedText); // Create and display the popup
+  if (selectedText && !popup && settings.popupEnabled) {
+    createPopup(event, selectedText);
   }
 });
 
@@ -346,5 +349,7 @@ function highlightQuote(quoteText) {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "highlightQuote") {
     highlightQuote(request.quoteText);
+  } else if (request.action === "updateSettings") {
+    settings = request.settings;
   }
 });

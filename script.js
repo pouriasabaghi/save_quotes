@@ -29,6 +29,46 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   const quotesUl = document.querySelector("#quotes");
 
+  // Settings functionality
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsPanel = document.getElementById('settingsPanel');
+  const popupToggle = document.getElementById('popupEnabled');
+
+  // Load settings from storage
+  chrome.storage.local.get(['settings'], function(result) {
+    const settings = result.settings || { popupEnabled: true };
+    popupToggle.checked = settings.popupEnabled;
+    
+    // Send initial settings to content script
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: "updateSettings",
+        settings: settings
+      });
+    });
+  });
+
+  // Toggle settings panel
+  settingsBtn.addEventListener('click', () => {
+    settingsPanel.classList.toggle('hidden');
+  });
+
+  // Handle settings changes
+  popupToggle.addEventListener('change', (e) => {
+    const settings = { popupEnabled: e.target.checked };
+    
+    // Save settings
+    chrome.storage.local.set({ settings }, function() {
+      // Send settings update to content script
+      chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: "updateSettings",
+          settings: settings
+        });
+      });
+    });
+  });
+
   // Initialize filter buttons
   const filterButtons = document.querySelectorAll('.filter-btn');
   let currentFilter = 'all';
