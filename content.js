@@ -5,28 +5,36 @@ const SAVE_ICON =
 
 // Define text types and their styles
 const TEXT_TYPES = {
-  quote: {
-    name: 'Quote',
-    icon: '❝',
+  note: {
+    name: "Note",
+    icon: "✎",
     style: {
-      backgroundColor: 'rgb(255, 255, 255)',
-      padding: '0.75rem',
-      borderRadius: '0'
-    }
+      backgroundColor: "#fff",
+    },
   },
   code: {
-    name: 'Code',
-    icon: '{ }',
+    name: "Code",
+    icon: "{ }",
     style: {
-      backgroundColor: 'rgb(40 44 52 / 90%)',
-      color: '#abb2bf',
-      padding: '12px',
-      borderRadius: '4px',
-      fontFamily: 'monospace',
-      fontSize: '14px',
-      lineHeight: '1.5'
-    }
-  }
+      backgroundColor: "rgb(40 44 52 / 90%)",
+      color: "#abb2bf",
+      padding: "12px",
+      borderRadius: "4px",
+      fontFamily: "monospace",
+      whiteSpace: "pre",
+      fontSize: "14px",
+      lineHeight: "1.5",
+    },
+  },
+  quote: {
+    name: "Quote",
+    icon: "❝",
+    style: {
+      backgroundColor: "rgb(140 124 63 / 30%)",
+      padding: "0",
+      borderRadius: "0",
+    },
+  },
 };
 
 let popup; // Variable to hold the popup status
@@ -64,20 +72,20 @@ function createPopup(event, selectedText) {
     button.style.gap = "5px";
     button.style.borderRadius = "3px";
     button.style.transition = "background-color 0.2s";
-    
+
     // Icon
     const icon = document.createElement("span");
     icon.textContent = config.icon;
     icon.style.fontSize = "16px";
-    
+
     // Text
     const text = document.createElement("span");
     text.textContent = config.name;
     text.style.fontSize = "12px";
-    
+
     button.appendChild(icon);
     button.appendChild(text);
-    
+
     // Hover effect
     button.addEventListener("mouseover", () => {
       button.style.backgroundColor = "rgba(255,255,255,0.1)";
@@ -85,12 +93,16 @@ function createPopup(event, selectedText) {
     button.addEventListener("mouseout", () => {
       button.style.backgroundColor = "transparent";
     });
-    
+
     // Click event
-    button.addEventListener("click", () => saveQuoteAction(selectedText, type), {
-      once: true,
-    });
-    
+    button.addEventListener(
+      "click",
+      () => saveQuoteAction(selectedText, type),
+      {
+        once: true,
+      }
+    );
+
     popup.appendChild(button);
   });
 
@@ -107,26 +119,26 @@ function createPopup(event, selectedText) {
  * @param {string} text - The text to be saved.
  * @param {string} type - The type of text (quote, code, etc.).
  */
-function saveQuoteAction(text, type = 'quote') {
+function saveQuoteAction(text, type = "quote") {
   // Validate text length
   if (text.length < 10) {
     // Create and style custom alert
-    const alertDiv = document.createElement('div');
-    alertDiv.style.position = 'fixed';
-    alertDiv.style.top = '20px';
-    alertDiv.style.left = '50%';
-    alertDiv.style.transform = 'translateX(-50%)';
-    alertDiv.style.backgroundColor = '#f44336';
-    alertDiv.style.color = 'white';
-    alertDiv.style.padding = '15px 20px';
-    alertDiv.style.borderRadius = '4px';
-    alertDiv.style.zIndex = '10000';
-    alertDiv.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-    alertDiv.style.animation = 'fadeIn 0.3s ease-in-out';
-    alertDiv.textContent = 'Could you please select a longer text?';
+    const alertDiv = document.createElement("div");
+    alertDiv.style.position = "fixed";
+    alertDiv.style.top = "20px";
+    alertDiv.style.left = "50%";
+    alertDiv.style.transform = "translateX(-50%)";
+    alertDiv.style.backgroundColor = "#f44336";
+    alertDiv.style.color = "white";
+    alertDiv.style.padding = "15px 20px";
+    alertDiv.style.borderRadius = "4px";
+    alertDiv.style.zIndex = "10000";
+    alertDiv.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
+    alertDiv.style.animation = "fadeIn 0.3s ease-in-out";
+    alertDiv.textContent = "Could you please select a longer text?";
 
     // Add fade in animation
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       @keyframes fadeIn {
         from { opacity: 0; transform: translate(-50%, -20px); }
@@ -144,7 +156,7 @@ function saveQuoteAction(text, type = 'quote') {
 
     // Remove alert after 3 seconds
     setTimeout(() => {
-      alertDiv.style.animation = 'fadeOut 0.3s ease-in-out';
+      alertDiv.style.animation = "fadeOut 0.3s ease-in-out";
       setTimeout(() => {
         document.body.removeChild(alertDiv);
         document.head.removeChild(style);
@@ -156,7 +168,7 @@ function saveQuoteAction(text, type = 'quote') {
       document.body.removeChild(popup);
       popup = null;
     }
-    
+
     return;
   }
 
@@ -243,7 +255,7 @@ function highlightQuote(quoteText) {
 
   // Remove any previous highlights
   const existingHighlights = document.querySelectorAll(".save-quote-highlight");
-  existingHighlights.forEach(h => h.remove());
+  existingHighlights.forEach((h) => h.remove());
 
   // Clear any existing selection
   window.getSelection().removeAllRanges();
@@ -264,23 +276,25 @@ function highlightQuote(quoteText) {
       const highlights = [];
 
       // Remove existing highlights
-      document.querySelectorAll('.save-quote-highlight').forEach(h => h.remove());
+      document
+        .querySelectorAll(".save-quote-highlight")
+        .forEach((h) => h.remove());
 
       // Create new highlights
       for (const rect of rects) {
-        const highlight = document.createElement('div');
-        highlight.className = 'save-quote-highlight';
-        highlight.style.position = 'absolute';
-        highlight.style.backgroundColor = 'rgb(140 124 63 / 30%)';
-        highlight.style.pointerEvents = 'none';
-        highlight.style.zIndex = '9';
-        
+        const highlight = document.createElement("div");
+        highlight.className = "save-quote-highlight";
+        highlight.style.position = "absolute";
+        highlight.style.backgroundColor = "rgb(140 124 63 / 30%)";
+        highlight.style.pointerEvents = "none";
+        highlight.style.zIndex = "9";
+
         // Position the highlight
         highlight.style.left = `${rect.left + scrollX}px`;
         highlight.style.top = `${rect.top + scrollY}px`;
         highlight.style.width = `${rect.width}px`;
         highlight.style.height = `${rect.height}px`;
-        
+
         document.body.appendChild(highlight);
         highlights.push(highlight);
       }
@@ -296,8 +310,8 @@ function highlightQuote(quoteText) {
       requestAnimationFrame(() => {
         const rect = highlights[0].getBoundingClientRect();
         window.scrollTo({
-          top: rect.top + window.scrollY - (window.innerHeight / 2),
-          behavior: 'smooth'
+          top: rect.top + window.scrollY - window.innerHeight / 2,
+          behavior: "smooth",
         });
       });
 
@@ -309,14 +323,18 @@ function highlightQuote(quoteText) {
 
       // Update highlights on scroll
       let scrollTimeout;
-      window.addEventListener('scroll', () => {
-        if (scrollTimeout) {
-          clearTimeout(scrollTimeout);
-        }
-        scrollTimeout = setTimeout(() => {
-          createHighlightOverlays();
-        }, 100);
-      }, { passive: true });
+      window.addEventListener(
+        "scroll",
+        () => {
+          if (scrollTimeout) {
+            clearTimeout(scrollTimeout);
+          }
+          scrollTimeout = setTimeout(() => {
+            createHighlightOverlays();
+          }, 100);
+        },
+        { passive: true }
+      );
     }
 
     // Clear the selection after creating highlights
