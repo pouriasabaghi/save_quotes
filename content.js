@@ -9,8 +9,8 @@ const TEXT_TYPES = {
     name: "Quote",
     icon: "❝",
     style: {
-      backgroundColor: "rgb(140 124 63 / 30%)",
-      padding: "0",
+      backgroundColor: "rgb(255, 255, 255)",
+      padding: "0.75rem",
       borderRadius: "0",
     },
   },
@@ -23,7 +23,6 @@ const TEXT_TYPES = {
       padding: "12px",
       borderRadius: "4px",
       fontFamily: "monospace",
-      whiteSpace: "pre",
       fontSize: "14px",
       lineHeight: "1.5",
     },

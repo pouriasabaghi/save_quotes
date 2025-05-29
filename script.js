@@ -324,10 +324,20 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <div class="content-wrapper" style="${styleString}">
                     ${textContent}
                 </div>
+                <div class="edit-wrapper">
+                    <textarea class="edit-textarea" data-original-text="${encodeForAttribute(quote.text)}">${quote.text}</textarea>
+                    <div class="edit-actions">
+                        <button class="cancel-edit-btn">Cancel</button>
+                        <button class="save-edit-btn">Save</button>
+                    </div>
+                </div>
                 <div class="action-buttons">
                     ${linkTag}
                     <button class="copy-btn" data-text="${encodeForAttribute(quote.text)}">
                         Copy
+                    </button>
+                    <button class="edit-btn">
+                        Edit
                     </button>
                 </div>
             </div>
@@ -353,6 +363,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     const copyButtons = document.querySelectorAll(".copy-btn");
     copyButtons?.forEach(button => {
       button.addEventListener("click", handleCopy);
+    });
+
+    // Add click handlers for edit buttons
+    const editButtons = document.querySelectorAll(".edit-btn");
+    editButtons?.forEach(button => {
+      button.addEventListener("click", handleEdit);
+    });
+
+    // Add click handlers for cancel edit buttons
+    const cancelEditButtons = document.querySelectorAll(".cancel-edit-btn");
+    cancelEditButtons?.forEach(button => {
+      button.addEventListener("click", handleCancelEdit);
+    });
+
+    // Add click handlers for save edit buttons
+    const saveEditButtons = document.querySelectorAll(".save-edit-btn");
+    saveEditButtons?.forEach(button => {
+      button.addEventListener("click", handleSaveEdit);
     });
 
     // Highlight the selected quote in the original page
@@ -395,6 +423,85 @@ document.addEventListener("DOMContentLoaded", async () => {
           button.classList.remove("copied");
         }, 2000);
       });
+    }
+
+    // Handle edit button click
+    function handleEdit(e) {
+      const quoteItem = e.target.closest(".quotes--item");
+      quoteItem.querySelector(".quotes--item-desc").classList.add("edit-mode");
+    }
+
+    // Handle cancel edit
+    function handleCancelEdit(e) {
+      const quoteItem = e.target.closest(".quotes--item");
+      const textarea = quoteItem.querySelector(".edit-textarea");
+      const originalText = textarea.dataset.originalText;
+      
+      // Reset textarea content
+      textarea.value = originalText;
+      
+      // Exit edit mode
+      quoteItem.querySelector(".quotes--item-desc").classList.remove("edit-mode");
+    }
+
+    // Handle save edit
+    async function handleSaveEdit(e) {
+      try {
+        const quoteItem = e.target.closest(".quotes--item");
+        const quoteId = quoteItem.querySelector(".delete-quote").dataset.id;
+        const textarea = quoteItem.querySelector(".edit-textarea");
+        const newText = textarea.value.trim();
+        
+        if (newText.length < 10) {
+          showError("Text must be at least 10 characters long");
+          return;
+        }
+
+        // Get current quotes
+        const quotes = await getFromStorage("quotes") || [];
+        const quoteIndex = quotes.findIndex(q => q.id === quoteId);
+        
+        if (quoteIndex === -1) {
+          throw new Error("Quote not found");
+        }
+
+        // Update the quote
+        quotes[quoteIndex].text = newText;
+
+        // Save to storage
+        await new Promise((resolve, reject) => {
+          chrome.storage.local.set({ quotes }, () => {
+            if (chrome.runtime.lastError) {
+              reject(chrome.runtime.lastError);
+            } else {
+              resolve();
+            }
+          });
+        });
+
+        // Update UI
+        const contentWrapper = quoteItem.querySelector(".content-wrapper");
+        const copyBtn = quoteItem.querySelector(".copy-btn");
+        const visitLink = quoteItem.querySelector(".quotes--item-link");
+        
+        if (quotes[quoteIndex].type === 'code') {
+          contentWrapper.innerHTML = `<pre class="code-block"><code>${escapeHtml(newText)}</code></pre>`;
+        } else {
+          contentWrapper.innerHTML = `<p class="text-line-overflow">${newText}</p>`;
+        }
+        
+        copyBtn.dataset.text = newText;
+        visitLink.dataset.quote = newText;
+        textarea.dataset.originalText = newText;
+
+        // Exit edit mode
+        quoteItem.querySelector(".quotes--item-desc").classList.remove("edit-mode");
+        
+        showSuccess("Changes saved successfully");
+      } catch (error) {
+        console.error('Error saving changes:', error);
+        showError('Error saving changes');
+      }
     }
 
     // Add click handlers for delete buttons
