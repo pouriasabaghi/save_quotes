@@ -29,6 +29,38 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   const quotesUl = document.querySelector("#quotes");
 
+  // Initialize filter buttons
+  const filterButtons = document.querySelectorAll('.filter-btn');
+  let currentFilter = 'all';
+
+  // Add click handlers to filter buttons
+  filterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const filterType = button.dataset.type;
+      
+      // Update active button
+      filterButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      
+      // Update current filter and apply it
+      currentFilter = filterType;
+      applyFilter();
+    });
+  });
+
+  // Function to apply the current filter
+  function applyFilter() {
+    const items = document.querySelectorAll('.quotes--item');
+    items.forEach(item => {
+      const type = item.querySelector('.quotes--item-desc').classList[1].replace('-container', '');
+      if (currentFilter === 'all' || type === currentFilter) {
+        item.classList.remove('hidden');
+      } else {
+        item.classList.add('hidden');
+      }
+    });
+  }
+
   // Load and display saved quotes from storage
   getFromStorage("quotes", (quotes) => {
     quotesUl.innerHTML =
@@ -40,6 +72,8 @@ document.addEventListener("DOMContentLoaded", () => {
            </div>`;
 
     addEventsToQuoteItems();
+    // Apply initial filter
+    applyFilter();
   });
 
   /**

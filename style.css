@@ -32,6 +32,7 @@ main {
   background-color: #f9fafb;
   position: relative;
   box-shadow: 0 0 17px 0 rgb(0 0 0 / 12%);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .quotes--item-link {
@@ -234,4 +235,39 @@ footer img{
 
 .content-wrapper::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
+}
+
+/* Filter buttons styles */
+.filter-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 0 10px;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  background-color: #f0f0f0;
+  color: #666;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.filter-btn.active {
+  background-color: #101826;
+  color: white;
+}
+
+/* Animation for showing/hiding quotes */
+.quotes--item.hidden {
+  opacity: 0;
+  transform: translateY(10px);
+  display: none;
 }
