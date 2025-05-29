@@ -36,21 +36,26 @@ main {
 }
 
 .quotes--item-link {
-  padding: 0.5rem 3rem;
+  padding: 0.5rem 2rem;
   color: white;
   background-color: #101826;
   border-radius: 0.5rem;
   font-size: 12px;
-  transition: filter 500ms;
-  margin-top: 1rem;
+  transition: all 0.3s ease;
   display: inline-block;
   font-weight: bold;
+  text-align: center;
 }
 .quotes--item-link:hover {
   filter: brightness(1.1);
 }
 .quotes--item-link:active {
   filter: brightness(0.9);
+}
+
+.quotes--item-link.copied {
+  background-color: #4CAF50;
+  color: white;
 }
 
 .quotes--item-image {
@@ -270,4 +275,33 @@ footer img{
   opacity: 0;
   transform: translateY(10px);
   display: none;
+}
+
+/* Action buttons container */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+/* Copy button styles */
+.copy-btn {
+  padding: 0.5rem 2rem;
+  color: #666;
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.copy-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.copy-btn.copied {
+  background-color: #4CAF50;
+  color: white;
 }

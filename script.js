@@ -100,6 +100,21 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /**
+   * Safely encode text for use in HTML attributes
+   * @param {string} str - The string to encode
+   * @returns {string} - The encoded string
+   */
+  function encodeForAttribute(str) {
+    return str.replace(/&/g, '&amp;')
+              .replace(/'/g, '&apos;')
+              .replace(/"/g, '&quot;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/\n/g, '&#10;')
+              .replace(/\r/g, '&#13;');
+  }
+
+  /**
    * Creates a link element for the quote
    * If we're on the same page as the quote, shows "Visit" link
    * Otherwise creates an external link to the quote's original page
@@ -120,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
    * Applies appropriate styling based on the quote type
    */
   function createQuoteListItem(linkTag, quote) {
-    // Convert style object to CSS string
+    // Convert style string from quote style object
     const styleString = quote.style ? 
       Object.entries(quote.style)
         .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
@@ -150,7 +165,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="content-wrapper" style="${styleString}">
                     ${textContent}
                 </div>
-                ${linkTag}
+                <div class="action-buttons">
+                    ${linkTag}
+                    <button class="copy-btn" data-text="${encodeForAttribute(quote.text)}">
+                        Copy
+                    </button>
+                </div>
             </div>
             <small role="button" class='delete-quote' data-id="${quote.id}">
                 <img src="/delete.svg" alt="delete" />
@@ -170,6 +190,12 @@ document.addEventListener("DOMContentLoaded", () => {
       item.addEventListener("click", handleHighlightAction)
     );
 
+    // Add click handlers for copy buttons
+    const copyButtons = document.querySelectorAll(".copy-btn");
+    copyButtons?.forEach(button => {
+      button.addEventListener("click", handleCopy);
+    });
+
     // Highlight the selected quote in the original page
     function handleHighlightAction(e) {
       const li = e.target.closest("li");
@@ -183,6 +209,32 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         window.close();
+      });
+    }
+
+    // Handle copying text
+    function handleCopy(e) {
+      const text = e.target.dataset.text;
+      // Decode HTML entities before copying
+      const decodedText = text.replace(/&quot;/g, '"')
+                             .replace(/&apos;/g, "'")
+                             .replace(/&lt;/g, '<')
+                             .replace(/&gt;/g, '>')
+                             .replace(/&amp;/g, '&')
+                             .replace(/&#10;/g, '\n')
+                             .replace(/&#13;/g, '\r');
+
+      navigator.clipboard.writeText(decodedText).then(() => {
+        // Change button text temporarily to show feedback
+        const button = e.target;
+        const originalText = button.textContent;
+        button.textContent = "Copied!";
+        button.classList.add("copied");
+        
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.classList.remove("copied");
+        }, 2000);
       });
     }
 
