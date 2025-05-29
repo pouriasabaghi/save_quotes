@@ -305,7 +305,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     const typeClass = quote.type || 'quote';
     const textContent = quote.type === 'code' 
       ? `<pre class="code-block"><code>${escapeHtml(quote.text)}</code></pre>`
-      : `<p class="text-line-overflow">${quote.text}</p>`;
+      : `
+          <div class="text-container">
+            <p class="text-line-overflow">${quote.text}</p>
+            <button class="expand-btn">
+              <span class="text">Show More</span>
+              <span class="icon">▼</span>
+            </button>
+          </div>
+        `;
 
     return ` 
       <li class="quotes--item quotes--header-label">
@@ -381,6 +389,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     const saveEditButtons = document.querySelectorAll(".save-edit-btn");
     saveEditButtons?.forEach(button => {
       button.addEventListener("click", handleSaveEdit);
+    });
+
+    // Add click handlers for text expand/collapse
+    const expandButtons = document.querySelectorAll(".expand-btn");
+    expandButtons?.forEach(button => {
+      // Check if text needs expand button
+      const textElement = button.closest('.text-container').querySelector('.text-line-overflow');
+      const contentWrapper = button.closest('.content-wrapper');
+      
+      // Check if text is shorter than the container
+      if (textElement.scrollHeight <= textElement.clientHeight) {
+        contentWrapper.classList.add('short-text');
+        return;
+      }
+
+      button.addEventListener("click", handleExpandCollapse);
     });
 
     // Highlight the selected quote in the original page
@@ -487,7 +511,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (quotes[quoteIndex].type === 'code') {
           contentWrapper.innerHTML = `<pre class="code-block"><code>${escapeHtml(newText)}</code></pre>`;
         } else {
-          contentWrapper.innerHTML = `<p class="text-line-overflow">${newText}</p>`;
+          contentWrapper.innerHTML = `
+            <div class="text-container">
+              <p class="text-line-overflow">${newText}</p>
+              <button class="expand-btn">
+                <span class="text">Show More</span>
+                <span class="icon">▼</span>
+              </button>
+            </div>
+          `;
+          
+          // Re-add event listener for expand button
+          const expandButton = contentWrapper.querySelector('.expand-btn');
+          const textElement = contentWrapper.querySelector('.text-line-overflow');
+          
+          if (textElement.scrollHeight <= textElement.clientHeight) {
+            contentWrapper.classList.add('short-text');
+          } else {
+            expandButton.addEventListener("click", handleExpandCollapse);
+          }
         }
         
         copyBtn.dataset.text = newText;
@@ -504,6 +546,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
+    // Handle text expand/collapse
+    function handleExpandCollapse(e) {
+      const button = e.currentTarget;
+      const textElement = button.closest('.text-container').querySelector('.text-line-overflow');
+      const isExpanded = textElement.classList.contains('expanded');
+      
+      // Toggle expanded state
+      textElement.classList.toggle('expanded');
+      button.classList.toggle('expanded');
+      
+      // Update button text
+      const textSpan = button.querySelector('.text');
+      textSpan.textContent = isExpanded ? 'Show More' : 'Show Less';
+    }
+
     // Add click handlers for delete buttons
     const deleteButtons = document.querySelectorAll(".delete-quote");
     deleteButtons?.forEach((button) =>
@@ -513,7 +570,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           const quoteId = e.target.closest('[data-id]').dataset.id;
           const quotes = await getFromStorage("quotes") || [];
-          const updatedQuotes = quotes.filter(quote => quote.id !== quoteId);
+          const updatedQuotes = quotes.filter(quote => quote.id != quoteId);
+          console.log(quotes, updatedQuotes);
           
           await new Promise((resolve, reject) => {
             chrome.storage.local.set({ quotes: updatedQuotes }, () => {
