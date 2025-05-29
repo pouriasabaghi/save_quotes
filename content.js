@@ -5,11 +5,13 @@ const SAVE_ICON =
 
 // Define text types and their styles
 const TEXT_TYPES = {
-  note: {
-    name: "Note",
-    icon: "✎",
+  quote: {
+    name: "Quote",
+    icon: "❝",
     style: {
-      backgroundColor: "#fff",
+      backgroundColor: "rgb(140 124 63 / 30%)",
+      padding: "0",
+      borderRadius: "0",
     },
   },
   code: {
@@ -26,13 +28,11 @@ const TEXT_TYPES = {
       lineHeight: "1.5",
     },
   },
-  quote: {
-    name: "Quote",
-    icon: "❝",
+  note: {
+    name: "Note",
+    icon: "✎",
     style: {
-      backgroundColor: "rgb(140 124 63 / 30%)",
-      padding: "0",
-      borderRadius: "0",
+      backgroundColor: "#fff",
     },
   },
 };
@@ -345,11 +345,15 @@ function highlightQuote(quoteText) {
   }
 }
 
-// Listen for messages from the background or popup scripts
+// Add message listener for settings updates
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "highlightQuote") {
-    highlightQuote(request.quoteText);
-  } else if (request.action === "updateSettings") {
+  if (request.action === "updateSettings") {
     settings = request.settings;
+    sendResponse({ status: "success" });
+    return true;
+  } else if (request.action === "highlightQuote") {
+    highlightQuote(request.quoteText);
+    sendResponse({ status: "success" });
+    return true;
   }
 });

@@ -12,7 +12,7 @@
         <div class="filter-container">
           <button class="filter-btn active" data-type="all">All</button>
           <button class="filter-btn" data-type="quote">Quotes</button>
-          <button class="filter-btn" data-type="code">Code</button>
+          <button class="filter-btn" data-type="code">Codes</button>
           <button class="filter-btn" data-type="note">Notes</button>
         </div>
         <button id="settingsBtn" class="settings-btn">⚙</button>
@@ -25,6 +25,22 @@
             <span class="slider"></span>
           </label>
           <span class="setting-label">Show popup on text selection</span>
+        </div>
+        <div class="settings-divider"></div>
+        <div class="backup-section">
+          <h4>Backup & Restore</h4>
+          <div class="backup-buttons">
+            <button id="backupBtn" class="secondary-btn">
+              Download Backup
+            </button>
+          </div>
+          <div class="restore-section">
+            <p class="restore-hint">To restore your data, paste the backup JSON here:</p>
+            <textarea id="restoreInput" placeholder="Paste your backup JSON here..." class="restore-textarea"></textarea>
+            <button id="restoreBtn" class="secondary-btn">
+              Restore from JSON
+            </button>
+          </div>
         </div>
       </div>
       <ul id="quotes" class="quotes"></ul>
