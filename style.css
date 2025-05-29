@@ -144,3 +144,94 @@ footer a {
 footer img{
   vertical-align: middle;
 }
+
+/* Quote type specific styles */
+.quotes--item-desc {
+  padding: 10px 0;
+}
+
+.content-wrapper {
+  margin-bottom: 10px;
+  overflow-x: auto;
+}
+
+/* Code type specific styles */
+.code-container .content-wrapper {
+  background-color: rgb(40 44 52 / 90%);
+  border-radius: 4px;
+  margin: 10px 0;
+  padding: 12px;
+}
+
+.code-container .code-block {
+  margin: 0;
+  padding: 0;
+}
+
+.code-container code {
+  font-family: 'Fira Code', 'Consolas', monospace;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-all;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #e3e3e3;
+  display: block;
+}
+
+/* Syntax highlighting-like styles for HTML */
+.code-container code .tag {
+  color: #e06c75;
+}
+
+.code-container code .attr {
+  color: #d19a66;
+}
+
+.code-container code .string {
+  color: #98c379;
+}
+
+/* Quote type specific styles */
+.quote-container .content-wrapper {
+  position: relative;
+  padding-left: 10px;
+}
+
+.quote-container .content-wrapper::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: rgb(0, 0, 0);
+  border-radius: 3px;
+}
+
+/* Common styles for both types */
+.content-wrapper {
+  position: relative;
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.content-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.content-wrapper::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
