@@ -39,7 +39,14 @@ const TEXT_TYPES = {
 let popup; // Variable to hold the popup status
 
 // Store settings
-let settings = { popupEnabled: false };
+let settings = { popupEnabled: true }; // Default value, will be updated from storage
+
+// Load settings from storage
+chrome.storage.local.get(['settings'], function(result) {
+  if (result.settings) {
+    settings = result.settings;
+  }
+});
 
 /**
  * Create and display a popup with options near the selected text.
@@ -468,12 +475,12 @@ function showTypePopup(text, url, site, siteName) {
   });
 
   // Add click outside handler to close popup
-  document.addEventListener('click', function closePopup(e) {
+  document.addEventListener("click", function closePopup(e) {
     if (!popup.contains(e.target)) {
       popup.remove();
       popup = null;
       style.remove();
-      document.removeEventListener('click', closePopup);
+      document.removeEventListener("click", closePopup);
     }
   });
 

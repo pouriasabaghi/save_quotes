@@ -93,10 +93,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Load settings from storage
   async function loadSettings() {
     try {
-      const settings = await getFromStorage('settings') || { popupEnabled: false };
+      const result = await new Promise(resolve => {
+        chrome.storage.local.get(['settings'], resolve);
+      });
+      
+      // Use stored settings or default
+      const settings = result.settings || { popupEnabled: true };
       popupToggle.checked = settings.popupEnabled;
       
-      // Try to send settings to content script, but don't throw if it fails
+      // Try to send settings to content script
       try {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs[0]) {
@@ -316,10 +321,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Handle settings changes
   popupToggle.addEventListener('change', async (e) => {
     try {
-      const settings = { popupEnabled: e.target.checked };
+      // Get current settings first
+      const result = await new Promise(resolve => {
+        chrome.storage.local.get(['settings'], resolve);
+      });
+      
+      // Update settings while preserving other values
+      const settings = {
+        ...result.settings,
+        popupEnabled: e.target.checked
+      };
       
       // Save settings
-      await chrome.storage.local.set({ settings });
+      await new Promise((resolve, reject) => {
+        chrome.storage.local.set({ settings }, () => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve();
+          }
+        });
+      });
       
       // Send settings update to content script
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -859,10 +881,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         showError("Text must be at least 10 characters long");
         return;
       }
-
-      // Get current quotes
-      const quotes = await getFromStorage("quotes") || [];
-      const quoteIndex = quotes.findIndex(q => q.id === quoteId);
+      
+      // Find quote in currentQuotes
+      const quoteIndex = currentQuotes.findIndex(q => q.id == quoteId);
       
       if (quoteIndex === -1) {
         throw new Error("Quote not found");
@@ -870,26 +891,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       // Keep all existing properties and only update the text
       const updatedQuote = {
-        ...quotes[quoteIndex],
+        ...currentQuotes[quoteIndex],
         text: newText
       };
 
-      // Update the quote
-      quotes[quoteIndex] = updatedQuote;
+      // Update in currentQuotes
+      currentQuotes[quoteIndex] = updatedQuote;
 
-      // Save to storage
-      await new Promise((resolve, reject) => {
-        chrome.storage.local.set({ quotes }, () => {
-          if (chrome.runtime.lastError) {
-            reject(chrome.runtime.lastError);
-          } else {
-            resolve();
-          }
-        });
+      // Save to storage - Note: we need to reverse before saving to maintain original order
+      await chrome.storage.local.set({ 
+        quotes: [...currentQuotes].reverse()
       });
-
-      // Update currentQuotes to match storage
-      currentQuotes = quotes;
 
       // Update UI
       const contentWrapper = quoteItem.querySelector(".content-wrapper");
