@@ -89,6 +89,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   const restoreBtn = document.getElementById('restoreBtn');
   const labelsFilterPanel = document.getElementById('labelsFilterPanel');
   const labelsFilterList = document.getElementById('labelsFilterList');
+  const introMessage = `
+    <div class="welcome-container">
+      <h2>🎉 Welcome to Save Quotes!</h2>
+      <div class="welcome-content">
+        <p><strong>Quick Tips:</strong></p>
+        <ul>
+          <li>⚠️ Please refresh all your open tabs once after installation for the extension to work properly.</li>
+          <li>💡 To save a quote: Select any text, then either:
+            <ul>
+              <li>Click the popup that appears, or</li>
+              <li>Right-click and choose "Save Quote"</li>
+            </ul>
+          </li>
+          <li>🏷️ Create labels in Settings to organize your quotes</li>
+          <li>⚙️ You can enable and disable popup in Settings</li>
+          <li>🔍 Use the search bar to find specific quotes</li>
+        </ul>
+      </div>
+    </div>
+  `;
 
   // Load settings from storage
   async function loadSettings() {
@@ -98,7 +118,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
       
       // Use stored settings or default
-      const settings = result.settings || { popupEnabled: true };
+      const settings = result.settings || { popupEnabled: false };
       popupToggle.checked = settings.popupEnabled;
       
       // Try to send settings to content script
@@ -178,7 +198,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!currentLabels || currentLabels.length === 0) {
       labelsFilterList.innerHTML = `
-        <div class="empty-labels-message">
+        <div class="empty-message">
           No labels yet! Go to Settings and create some labels to better organize your quotes.
         </div>
       `;
@@ -270,10 +290,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       quotesUl.innerHTML = quotes && quotes.length
         ? generateQuoteList(quotesToRender)
-        : `<div class="intro">
-              <p>You haven't saved any quotes yet.</p>
-              <p>It's super easy! Just highlight a part of the text you want, then click 'Save icon' on the popup, or right-click and choose 'Save quote' from the menu. Ta-da!</p>
-           </div>`;
+        : introMessage;
 
       addEventsToQuoteItems();
     } catch (error) {
@@ -497,7 +514,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const isCurrentUrl = new URL(quote.url).href === currentUrl;
 
     if (isCurrentUrl) {
-      return `<a data-quote="${escapeHtml(quote.text)}"  class="quotes--item-link" href="#">Visit</a>`;
+      return `<a data-quote="${escapeHtml(quote.text)}"  class="quotes--item-link" href="#">Go To</a>`;
     }
 
     return `<a data-quote="${escapeHtml(quote.text)}" class="quotes--item-link" target="_blank" href="${quote.url}">Visit</a>`;
@@ -521,7 +538,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const textContent = quote.type === 'code' 
       ? `<pre class="code-block"><code>${escapeHtml(quote.text)}</code></pre>`
       : `<div class="text-container">
-           <p class="text-line-overflow">${quote.text}</p>
+           <p class="text-line-overflow" dir="auto">${quote.text}</p>
            <button class="expand-btn">
              <span class="text">Show More</span>
              <span class="icon">▼</span>
@@ -739,7 +756,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           </div>
         `).join('')
         : `
-        <div class="empty-labels-message">
+        <div class="empty-message">
           No labels yet! Go to Settings and create some labels to better organize your quotes.
         </div>
         `
@@ -747,9 +764,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Position and show dropdown
         const buttonRect = button.getBoundingClientRect();
-        selectorContent.style.top = `${buttonRect.bottom + window.scrollY + 5}px`;
+        
         selectorContent.style.left = `${buttonRect.left + window.scrollX}px`;
+        const buttonLabelHight= 32;
         document.body.appendChild(selectorContent);
+        selectorContent.style.top = `${buttonRect.bottom + window.scrollY - buttonLabelHight - 5 - selectorContent.offsetHeight}px`;
+        console.log(selectorContent.offsetHeight);
         
         // Handle label selection
         selectorContent.addEventListener('click', async (e) => {
@@ -767,7 +787,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               }
 
               // Find quote index to maintain position
-              const quoteIndex = currentQuotes.findIndex(q => q.id === quoteId);
+              const quoteIndex = currentQuotes.findIndex(q => q.id == quoteId);
               if (quoteIndex !== -1) {
                 // Update quote in place
                 currentQuotes[quoteIndex] = {
@@ -927,7 +947,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         contentWrapper.innerHTML = `
           <div class="text-container">
-            <p class="text-line-overflow">${newText}</p>
+            <p class="text-line-overflow" dir="auto">${newText}</p>
             <button class="expand-btn">
               <span class="text">Show More</span>
               <span class="icon">▼</span>

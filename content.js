@@ -39,7 +39,7 @@ const TEXT_TYPES = {
 let popup; // Variable to hold the popup status
 
 // Store settings
-let settings = { popupEnabled: true }; // Default value, will be updated from storage
+let settings = { popupEnabled: false }; // Default value, will be updated from storage
 
 // Load settings from storage
 chrome.storage.local.get(['settings'], function(result) {
@@ -191,7 +191,7 @@ function saveQuoteAction(text, type = "quote") {
   url = url.toString();
 
   const quote = {
-    id: window.crypto.randomUUID(),
+    id: new Date().getTime(),
     text,
     type,
     style: TEXT_TYPES[type].style,
@@ -238,7 +238,7 @@ document.addEventListener("mouseup", (event) => {
   }
 });
 
-window.addEventListener("load", () => {
+document.addEventListener("DOMContentLoaded", () => {
   const currentUrl = window.location.href;
 
   chrome.storage.local.get(["quotes"], (result) => {
@@ -476,7 +476,7 @@ function showTypePopup(text, url, site, siteName) {
 
   // Add click outside handler to close popup
   document.addEventListener("click", function closePopup(e) {
-    if (!popup.contains(e.target)) {
+    if (popup && !popup.contains(e.target)) {
       popup.remove();
       popup = null;
       style.remove();
