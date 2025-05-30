@@ -16,10 +16,7 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
   if (info.menuItemId === "saveQuoteContextMenu") {
     let url = new URL(info.frameUrl);
     let params = new URLSearchParams(url.search);
-
-    // Delete current url quote
     params.delete("quote");
-
     url.search = params.toString();
     url = url.toString();
 
@@ -30,21 +27,14 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
           ? new URL(tab.url).hostname.split(".").slice(-2).join(".")
           : new URL(tab.url).hostname;
 
-      const quote = {
-        id: new Date().getTime(),
+      // Send message to content script to show type selection popup
+      chrome.tabs.sendMessage(tab.id, {
+        action: "showTypePopup",
         text: info.selectionText,
         url: info.frameUrl,
-        createdAt: new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          day: "numeric",
-          month: "long",
-        }),
-        icon: null,
-        site,
-        siteName: site.replace("www.", ""),
-      };
-
-      saveQuote(quote);
+        site: site,
+        siteName: site.replace("www.", "")
+      });
     }
   }
 });

@@ -354,5 +354,122 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     highlightQuote(request.quoteText);
     sendResponse({ status: "success" });
     return true;
+  } else if (request.action === "showTypePopup") {
+    const selectedText = request.text;
+    showTypePopup(selectedText, request.url, request.site, request.siteName);
   }
 });
+
+// Function to show type selection popup
+function showTypePopup(text, url, site, siteName) {
+  // Create popup container
+  popup = document.createElement("div");
+  popup.className = "save-quote-popup";
+  
+  // Create popup content
+  popup.innerHTML = `
+    <div class="popup-content">
+      <div class="type-buttons">
+        ${Object.entries(TEXT_TYPES).map(([type, info]) => `
+          <button class="type-button" data-type="${type}">
+            <span class="type-icon">${info.icon}</span>
+            <span class="type-name">${info.name}</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  // Add styles
+  const style = document.createElement('style');
+  style.textContent = `
+    .save-quote-popup {
+      position: fixed;
+      z-index: 999999;
+      background: rgb(76, 63, 63);
+      border-radius: 8px;
+      box-shadow: box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 8px;
+      padding: 5px;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .popup-header {
+      font-size: 14px;
+      color: white;
+      margin-bottom: 8px;
+    }
+    .type-buttons {
+      display: flex;
+      gap: 5px;
+    }
+    .type-button {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      font-size: 13px;
+    }
+    .type-button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .type-icon {
+      font-size: 16px;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Position popup near the selected text
+  const selection = window.getSelection();
+  const range = selection.getRangeAt(0);
+  const rect = range.getBoundingClientRect();
+  
+  popup.style.left = rect.left + window.scrollX + 'px';
+  popup.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+
+  // Add click handlers
+  popup.querySelectorAll('.type-button').forEach(button => {
+    button.addEventListener('click', () => {
+      const type = button.dataset.type;
+      const quote = {
+        id: new Date().getTime(),
+        text: text,
+        type: type,
+        url: url,
+        createdAt: new Date().toLocaleDateString("en-US", {
+          year: "numeric",
+          day: "numeric",
+          month: "long",
+        }),
+        icon: null,
+        site: site,
+        siteName: siteName,
+        style: TEXT_TYPES[type].style
+      };
+
+      // Send message to background script to save the quote
+      chrome.runtime.sendMessage({
+        action: "saveText",
+        quote: quote
+      });
+
+      // Remove popup
+      popup.remove();
+    });
+  });
+
+  // Add click outside handler to close popup
+  document.addEventListener('click', function closePopup(e) {
+    if (!popup.contains(e.target)) {
+      popup.remove();
+      document.removeEventListener('click', closePopup);
+    }
+  });
+
+  // Add to page
+  document.body.appendChild(popup);
+}
