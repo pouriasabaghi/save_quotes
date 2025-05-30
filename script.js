@@ -70,6 +70,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentQuotes = [];
   let currentFilter = 'all';
   let currentLabels = [];
+  let activeLabel = null;
 
   // Initialize DOM elements
   const quotesUl = document.querySelector("#quotes");
@@ -86,6 +87,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const backupBtn = document.getElementById('backupBtn');
   const restoreInput = document.getElementById('restoreInput');
   const restoreBtn = document.getElementById('restoreBtn');
+  const labelsFilterPanel = document.getElementById('labelsFilterPanel');
+  const labelsFilterList = document.getElementById('labelsFilterList');
 
   // Load settings from storage
   async function loadSettings() {
@@ -164,15 +167,68 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
   }
 
+  // Function to render labels filter panel
+  function renderLabelsFilter() {
+    if (!labelsFilterList) return;
+
+    // Count quotes for each label
+    const labelCounts = {};
+    currentQuotes.forEach(quote => {
+      if (quote.labels) {
+        quote.labels.forEach(labelId => {
+          labelCounts[labelId] = (labelCounts[labelId] || 0) + 1;
+        });
+      }
+    });
+
+    labelsFilterList.innerHTML = currentLabels.map(label => `
+      <div class="label-filter-item${activeLabel === label.id ? ' active' : ''}" 
+           style="background-color: ${label.color}" 
+           data-label-id="${label.id}">
+        ${label.name}
+        <span class="count">${labelCounts[label.id] || 0}</span>
+      </div>
+    `).join('');
+
+    // Add click handlers for label filters
+    document.querySelectorAll('.label-filter-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const labelId = item.dataset.labelId;
+        
+        // Toggle active state
+        if (activeLabel === labelId) {
+          activeLabel = null;
+          document.querySelectorAll('.label-filter-item').forEach(i => i.classList.remove('active'));
+          document.querySelector('.filter-btn[data-type="labels"]').classList.remove('has-active');
+        } else {
+          activeLabel = labelId;
+          document.querySelectorAll('.label-filter-item').forEach(i => {
+            i.classList.toggle('active', i.dataset.labelId === labelId);
+          });
+          document.querySelector('.filter-btn[data-type="labels"]').classList.add('has-active');
+        }
+
+        filterAndSearchQuotes();
+      });
+    });
+  }
+
   // Function to filter and search quotes
   function filterAndSearchQuotes() {
     const searchTerm = searchInput.value.toLowerCase();
     let filteredQuotes = [...currentQuotes];
 
-    // Apply type filter if active
+    // Apply type filter if active and not in labels view
     const activeTypeFilter = document.querySelector('.filter-btn.active').dataset.type;
-    if (activeTypeFilter !== 'all') {
+    if (activeTypeFilter !== 'all' && activeTypeFilter !== 'labels') {
       filteredQuotes = filteredQuotes.filter(quote => quote.type === activeTypeFilter);
+    }
+
+    // Apply label filter if a label is selected
+    if (activeLabel) {
+      filteredQuotes = filteredQuotes.filter(quote => 
+        quote.labels && quote.labels.includes(activeLabel)
+      );
     }
 
     // Apply search term filter
@@ -184,11 +240,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       );
     }
 
-    // Render filtered quotes without reversing since they're already in the right order
+    // Render filtered quotes
     if (filteredQuotes.length === 0) {
       quotesUl.innerHTML = '<div class="no-results">No matching quotes found</div>';
     } else {
-      renderQuotes(filteredQuotes, false);
+      renderQuotes(filteredQuotes);
     }
   }
 
@@ -299,6 +355,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Update active button
       filterButtons.forEach(btn => btn.classList.remove('active'));
       button.classList.add('active');
+      
+      // Toggle labels panel visibility
+      labelsFilterPanel.classList.toggle('hidden', filterType !== 'labels');
+      
+      // Reset active label if switching away from labels view
+      if (filterType !== 'labels') {
+        activeLabel = null;
+        document.querySelector('.filter-btn[data-type="labels"]').classList.remove('has-active');
+      }
       
       // Update current filter and apply it
       currentFilter = filterType;
@@ -588,6 +653,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       });
     });
+
+    renderLabelsFilter();
   }
 
   // Add label selector functionality
