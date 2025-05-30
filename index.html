@@ -47,6 +47,22 @@
           <span class="setting-label">Show popup on text selection</span>
         </div>
         <div class="settings-divider"></div>
+        <div class="labels-section">
+          <h4>Labels</h4>
+          <div class="labels-container">
+            <div class="labels-list" id="labelsList">
+              <!-- Labels will be rendered here -->
+            </div>
+            <div class="add-label-form">
+              <input type="text" id="newLabelInput" placeholder="Enter label name..." maxlength="20">
+              <div class="label-colors">
+                <!-- Colors will be added here by JavaScript -->
+              </div>
+              <button id="addLabelBtn" class="secondary-btn" disabled>Add Label</button>
+            </div>
+          </div>
+        </div>
+        <div class="settings-divider"></div>
         <div class="backup-section">
           <h4>Backup & Restore</h4>
           <div class="backup-buttons">

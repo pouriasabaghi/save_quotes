@@ -320,22 +320,6 @@ footer img{
 }
 
 /* Copy button styles */
-.copy-btn {
-  padding: 0.5rem 2rem;
-  color: #666;
-  background-color: #f0f0f0;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 12px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.copy-btn:hover {
-  background-color: #e0e0e0;
-}
-
 .copy-btn.copied {
   background-color: #4CAF50;
   color: white;
@@ -653,7 +637,7 @@ input:checked + .slider:before {
 }
 
 /* Edit functionality */
-.edit-btn {
+.edit-btn, .copy-btn, .label-btn {
   padding: 0.5rem 2rem;
   color: #666;
   background-color: #f0f0f0;
@@ -665,7 +649,7 @@ input:checked + .slider:before {
   transition: all 0.3s ease;
 }
 
-.edit-btn:hover {
+.edit-btn:hover, .copy-btn:hover, .label-btn:hover {
   background-color: #e0e0e0;
 }
 
@@ -741,4 +725,173 @@ input:checked + .slider:before {
   font-family: monospace;
   font-size: 13px;
   background-color: #f8f8f8;
+}
+
+/* Labels section */
+.labels-section {
+  margin-top: 16px;
+}
+
+.labels-section h4 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #333;
+}
+
+.labels-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.labels-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 32px;
+  padding: 8px;
+  border: 1px dashed #ddd;
+  border-radius: 4px;
+}
+
+.label-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.label-item:hover {
+  opacity: 0.9;
+}
+
+.label-item .delete-label {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  font-size: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.label-item .delete-label:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.add-label-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#newLabelInput {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+#newLabelInput:focus {
+  outline: none;
+  border-color: #101826;
+  box-shadow: 0 0 0 2px rgba(16, 24, 38, 0.1);
+}
+
+.label-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+
+.color-option {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+}
+
+.color-option.selected {
+  outline: 2px solid #101826;
+  outline-offset: 2px;
+}
+
+/* Quote labels */
+.quote-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.quote-label {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: white;
+}
+
+/* Label selector dropdown */
+.label-selector {
+  position: relative;
+  display: inline-block;
+}
+
+.label-selector-content {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 1000;
+  min-width: 150px;
+  display: none;
+}
+
+.label-selector-content.show {
+  display: block;
+}
+
+.label-selector-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.label-selector-item:hover {
+  background-color: #f5f5f5;
+}
+
+.label-selector-item .color-dot {
+  border-radius: 6px;
+  color: white;
+  padding: 3px 8px;
+}
+
+.label-selector-item .label-name {
+  font-size: 12px;
+  color: white;
 }

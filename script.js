@@ -69,10 +69,71 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Initialize state variables
   let currentQuotes = [];
   let currentFilter = 'all';
+  let currentLabels = [];
+
+  // Initialize DOM elements
   const quotesUl = document.querySelector("#quotes");
   const searchInput = document.getElementById('searchInput');
   const searchBtn = document.getElementById('searchBtn');
   const searchContainer = document.querySelector('.search-container');
+  const labelsList = document.getElementById('labelsList');
+  const newLabelInput = document.getElementById('newLabelInput');
+  const addLabelBtn = document.getElementById('addLabelBtn');
+  const labelColorsDiv = document.querySelector('.label-colors');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsPanel = document.getElementById('settingsPanel');
+  const popupToggle = document.getElementById('popupEnabled');
+  const backupBtn = document.getElementById('backupBtn');
+  const restoreInput = document.getElementById('restoreInput');
+  const restoreBtn = document.getElementById('restoreBtn');
+
+  // Load settings from storage
+  async function loadSettings() {
+    try {
+      const settings = await getFromStorage('settings') || { popupEnabled: true };
+      popupToggle.checked = settings.popupEnabled;
+      
+      // Try to send settings to content script, but don't throw if it fails
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tabs[0]) {
+          await new Promise((resolve) => {
+            chrome.tabs.sendMessage(
+              tabs[0].id,
+              {
+                action: "updateSettings",
+                settings: settings
+              },
+              // Add response callback to handle potential errors
+              (response) => {
+                if (chrome.runtime.lastError) {
+                  // Content script not ready/available - this is fine
+                  console.log('Content script not ready yet:', chrome.runtime.lastError.message);
+                }
+                resolve();
+              }
+            );
+          });
+        }
+      } catch (contentError) {
+        // Ignore content script communication errors
+        console.log('Could not update content script settings (this is normal if on extension page):', contentError);
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      showError('Error loading settings');
+    }
+  }
+
+  // Initial settings load
+  await loadSettings();
+
+  // Predefined colors for labels
+  const LABEL_COLORS = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+    '#FFEEAD', '#D4A5A5', '#9B59B6', '#3498DB',
+    '#E67E22', '#2ECC71', '#F1C40F', '#34495E'
+  ];
 
   let currentUrl;
   try {
@@ -123,19 +184,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       );
     }
 
-    // Render filtered quotes
+    // Render filtered quotes without reversing since they're already in the right order
     if (filteredQuotes.length === 0) {
       quotesUl.innerHTML = '<div class="no-results">No matching quotes found</div>';
     } else {
-      renderQuotes(filteredQuotes);
+      renderQuotes(filteredQuotes, false);
     }
   }
 
   // Function to render quotes
-  function renderQuotes(quotes) {
+  function renderQuotes(quotes, reverse = false) {
     try {
+      // Only reverse if explicitly requested
+      const quotesToRender = reverse ? [...quotes].reverse() : quotes;
+      
       quotesUl.innerHTML = quotes && quotes.length
-        ? generateQuoteList(quotes.reverse())
+        ? generateQuoteList(quotesToRender)
         : `<div class="intro">
               <p>You haven't saved any quotes yet.</p>
               <p>It's super easy! Just highlight a part of the text you want, then click 'Save icon' on the popup, or right-click and choose 'Save quote' from the menu. Ta-da!</p>
@@ -152,11 +216,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function loadQuotes() {
     try {
       const quotes = await getFromStorage("quotes") || [];
-      currentQuotes = quotes;
-      renderQuotes(quotes);
+      // Store quotes in reverse order initially
+      currentQuotes = [...quotes].reverse();
+      // Load labels first to ensure they're available when rendering quotes
+      await loadLabels();
+      // Don't reverse again since currentQuotes is already reversed
+      renderQuotes(currentQuotes, false);
     } catch (error) {
       console.error('Error loading quotes:', error);
       showError('Error loading saved quotes');
+    }
+  }
+
+  // Load labels from storage
+  async function loadLabels() {
+    try {
+      const labels = await getFromStorage("labels") || [];
+      currentLabels = labels;
+      renderLabels();
+    } catch (error) {
+      console.error('Error loading labels:', error);
+      showError('Error loading labels');
     }
   }
 
@@ -164,52 +244,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadQuotes();
 
   // Settings functionality
-  const settingsBtn = document.getElementById('settingsBtn');
-  const settingsPanel = document.getElementById('settingsPanel');
-  const popupToggle = document.getElementById('popupEnabled');
-
-  // Load settings from storage
-  async function loadSettings() {
-    try {
-      const settings = await getFromStorage('settings') || { popupEnabled: true };
-      popupToggle.checked = settings.popupEnabled;
-      
-      // Try to send settings to content script, but don't throw if it fails
-      try {
-        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tabs[0]) {
-          await new Promise((resolve) => {
-            chrome.tabs.sendMessage(
-              tabs[0].id,
-              {
-                action: "updateSettings",
-                settings: settings
-              },
-              // Add response callback to handle potential errors
-              (response) => {
-                if (chrome.runtime.lastError) {
-                  // Content script not ready/available - this is fine
-                  console.log('Content script not ready yet:', chrome.runtime.lastError.message);
-                }
-                resolve();
-              }
-            );
-          });
-        }
-      } catch (contentError) {
-        // Ignore content script communication errors
-        console.log('Could not update content script settings (this is normal if on extension page):', contentError);
-      }
-    } catch (error) {
-      console.error('Error loading settings:', error);
-      showError('Error loading settings');
-    }
-  }
-
-  // Initial settings load
-  await loadSettings();
-
-  // Toggle settings panel
   settingsBtn.addEventListener('click', () => {
     settingsPanel.classList.toggle('hidden');
   });
@@ -377,6 +411,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       ? `<pre class="code-block"><code>${escapeHtml(quote.text)}</code></pre>`
       : `<p class="text-line-overflow">${quote.text}</p>`;
 
+    const quoteLabels = quote.labels || [];
+    const labelsHtml = quoteLabels.length ? `
+      <div class="quote-labels">
+        ${quoteLabels.map(labelId => {
+          const label = currentLabels.find(l => l.id === labelId);
+          if (!label) return '';
+          return `<span class="quote-label" style="background-color: ${label.color}">${label.name}</span>`;
+        }).join('')}
+      </div>
+    ` : '';
+
     return ` 
       <li class="quotes--item quotes--header-label">
             <div class="quotes--item-image">
@@ -393,6 +438,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             <div class="quotes--item-desc ${typeClass}-container">
                 <div class="content-wrapper" style="${styleString}">
                     ${textContent}
+                    ${labelsHtml}
                 </div>
                 <div class="edit-wrapper">
                     <textarea class="edit-textarea" data-original-text="${encodeForAttribute(quote.text)}">${quote.text}</textarea>
@@ -409,6 +455,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <button class="edit-btn">
                         Edit
                     </button>
+                    <button class="label-btn" data-quote-id="${quote.id}">
+                        Labels
+                    </button>
                 </div>
             </div>
             <small role="button" class='delete-quote' data-id="${quote.id}">
@@ -417,11 +466,224 @@ document.addEventListener("DOMContentLoaded", async () => {
           </li>`;
   }
 
-  /**
-   * Add event listeners to quote items
-   * Handles both highlighting quotes in the original page
-   * and deleting quotes from storage
-   */
+  // Render color options
+  function renderColorOptions() {
+    if (!labelColorsDiv) return;
+    labelColorsDiv.innerHTML = LABEL_COLORS.map((color, index) => `
+      <div class="color-option${index === 0 ? ' selected' : ''}" 
+           data-color="${color}" 
+           style="background-color: ${color}">
+      </div>
+    `).join('');
+  }
+
+  // Initial render of color options
+  renderColorOptions();
+
+  // Color selection handling
+  labelColorsDiv?.addEventListener('click', (e) => {
+    const colorOption = e.target.closest('.color-option');
+    if (colorOption) {
+      document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+      colorOption.classList.add('selected');
+    }
+  });
+
+  // Enable/disable add label button based on input
+  newLabelInput?.addEventListener('input', () => {
+    const labelName = newLabelInput.value.trim();
+    addLabelBtn.disabled = labelName.length === 0;
+  });
+
+  // Add new label
+  addLabelBtn?.addEventListener('click', async () => {
+    const labelName = newLabelInput.value.trim();
+    const selectedColor = document.querySelector('.color-option.selected')?.dataset.color;
+    
+    if (!selectedColor) {
+      showError('Please select a color');
+      return;
+    }
+    
+    if (labelName) {
+      try {
+        // Check for duplicate names
+        if (currentLabels.some(label => label.name.toLowerCase() === labelName.toLowerCase())) {
+          showError('A label with this name already exists');
+          return;
+        }
+
+        const newLabel = {
+          id: window.crypto.randomUUID(),
+          name: labelName,
+          color: selectedColor
+        };
+
+        currentLabels = [...currentLabels, newLabel];
+        await chrome.storage.local.set({ labels: currentLabels });
+        
+        renderLabels();
+        newLabelInput.value = '';
+        addLabelBtn.disabled = true;
+        showSuccess('Label added successfully');
+      } catch (error) {
+        console.error('Error adding label:', error);
+        showError('Error adding label');
+      }
+    }
+  });
+
+  // Render labels
+  function renderLabels() {
+    if (!labelsList) return;
+    
+    labelsList.innerHTML = currentLabels.map(label => `
+      <div class="label-item" style="background-color: ${label.color}" data-label-id="${label.id}">
+        ${label.name}
+        <span class="delete-label" data-label-id="${label.id}">×</span>
+      </div>
+    `).join('');
+
+    // Add click handlers for labels
+    document.querySelectorAll('.label-item').forEach(labelItem => {
+      labelItem.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('delete-label')) {
+          const labelId = labelItem.dataset.labelId;
+          // Here you can add functionality for when a label is clicked
+          console.log('Label clicked:', labelId);
+        }
+      });
+    });
+
+    // Add delete handlers
+    document.querySelectorAll('.delete-label').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const labelId = e.target.dataset.labelId;
+        
+        if (confirm('Are you sure? This will remove the label from all quotes.')) {
+          try {
+            // Remove label from all quotes
+            const updatedQuotes = currentQuotes.map(quote => ({
+              ...quote,
+              labels: (quote.labels || []).filter(id => id !== labelId)
+            }));
+
+            // Update storage
+            currentLabels = currentLabels.filter(label => label.id !== labelId);
+            currentQuotes = updatedQuotes;
+            
+            await chrome.storage.local.set({ 
+              labels: currentLabels,
+              quotes: updatedQuotes
+            });
+
+            renderLabels();
+            renderQuotes(currentQuotes);
+            showSuccess('Label deleted successfully');
+          } catch (error) {
+            console.error('Error deleting label:', error);
+            showError('Error deleting label');
+          }
+        }
+      });
+    });
+  }
+
+  // Add label selector functionality
+  function addLabelSelectorEvents() {
+    const labelButtons = document.querySelectorAll('.label-btn');
+    labelButtons?.forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const quoteId = e.target.dataset.quoteId;
+        const quote = currentQuotes.find(q => q.id === quoteId);
+        if (!quote) return;
+        
+        const quoteLabels = quote.labels || [];
+        
+        // Remove any existing selector
+        const existingSelector = document.querySelector('.label-selector-content');
+        if (existingSelector) {
+          existingSelector.remove();
+        }
+        
+        // Create label selector dropdown
+        const selectorContent = document.createElement('div');
+        selectorContent.className = 'label-selector-content show';
+        selectorContent.innerHTML = currentLabels.map(label => `
+          <div class="label-selector-item" data-label-id="${label.id}">
+            <span class="color-dot" style="background-color: ${label.color}">
+              <span class="label-name">${label.name}</span>
+            </span>
+            ${quoteLabels.includes(label.id) ? '✓' : ''}
+          </div>
+        `).join('');
+
+        // Position and show dropdown
+        const buttonRect = button.getBoundingClientRect();
+        selectorContent.style.top = `${buttonRect.bottom + window.scrollY + 5}px`;
+        selectorContent.style.left = `${buttonRect.left + window.scrollX}px`;
+        document.body.appendChild(selectorContent);
+        
+        // Handle label selection
+        selectorContent.addEventListener('click', async (e) => {
+          const item = e.target.closest('.label-selector-item');
+          if (item) {
+            const labelId = item.dataset.labelId;
+            const labelIndex = quoteLabels.indexOf(labelId);
+            
+            try {
+              // Toggle label
+              if (labelIndex === -1) {
+                quoteLabels.push(labelId);
+              } else {
+                quoteLabels.splice(labelIndex, 1);
+              }
+
+              // Find quote index to maintain position
+              const quoteIndex = currentQuotes.findIndex(q => q.id === quoteId);
+              if (quoteIndex !== -1) {
+                // Update quote in place
+                currentQuotes[quoteIndex] = {
+                  ...quote,
+                  labels: quoteLabels
+                };
+
+                // Save to storage - reverse the order back to original before saving
+                await chrome.storage.local.set({ 
+                  quotes: [...currentQuotes].reverse() 
+                });
+                
+                // Re-render quotes without reversing
+                filterAndSearchQuotes();
+              }
+
+              selectorContent.remove();
+            } catch (error) {
+              console.error('Error updating quote labels:', error);
+              showError('Error updating labels');
+            }
+          }
+        });
+
+        // Close dropdown when clicking outside
+        const closeDropdown = (e) => {
+          if (!selectorContent.contains(e.target) && !button.contains(e.target)) {
+            selectorContent.remove();
+            document.removeEventListener('click', closeDropdown);
+          }
+        };
+        
+        // Delay adding the click listener to prevent immediate closing
+        setTimeout(() => {
+          document.addEventListener('click', closeDropdown);
+        }, 0);
+      });
+    });
+  }
+
+  // Add label selector events to quote items
   function addEventsToQuoteItems() {
     // Add click handlers for quote links
     const quotesItems = document.querySelectorAll(".quotes--item a");
@@ -663,13 +925,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       })
     );
+
+    addLabelSelectorEvents();
   }
 
   // Backup & Restore functionality
-  const backupBtn = document.getElementById('backupBtn');
-  const restoreInput = document.getElementById('restoreInput');
-  const restoreBtn = document.getElementById('restoreBtn');
-
   backupBtn.addEventListener('click', async () => {
     try {
       // Get all data from storage
