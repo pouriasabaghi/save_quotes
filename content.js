@@ -39,7 +39,7 @@ const TEXT_TYPES = {
 let popup; // Variable to hold the popup status
 
 // Store settings
-let settings = { popupEnabled: true };
+let settings = { popupEnabled: false };
 
 /**
  * Create and display a popup with options near the selected text.
@@ -445,7 +445,10 @@ function showTypePopup(text, url, site, siteName) {
           day: "numeric",
           month: "long",
         }),
-        icon: null,
+        icon:
+        document.querySelector("link[rel~='apple-touch-icon']")?.href ||
+        document.querySelector("link[rel~='icon']")?.href ||
+        document.querySelector("link[rel~='favicon']")?.href,
         site: site,
         siteName: siteName,
         style: TEXT_TYPES[type].style
@@ -457,8 +460,10 @@ function showTypePopup(text, url, site, siteName) {
         quote: quote
       });
 
-      // Remove popup
+      // Remove popup and set to null
       popup.remove();
+      popup = null;
+      style.remove();
     });
   });
 
@@ -466,6 +471,8 @@ function showTypePopup(text, url, site, siteName) {
   document.addEventListener('click', function closePopup(e) {
     if (!popup.contains(e.target)) {
       popup.remove();
+      popup = null;
+      style.remove();
       document.removeEventListener('click', closePopup);
     }
   });

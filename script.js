@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Load settings from storage
   async function loadSettings() {
     try {
-      const settings = await getFromStorage('settings') || { popupEnabled: true };
+      const settings = await getFromStorage('settings') || { popupEnabled: false };
       popupToggle.checked = settings.popupEnabled;
       
       // Try to send settings to content script, but don't throw if it fails
