@@ -1052,11 +1052,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
           });
 
-          // Remove the quote element from UI
-          const quoteElement = e.target.closest("li");
-          if (quoteElement) {
-            quoteElement.remove();
-          }
+          // Update currentQuotes
+          currentQuotes = currentQuotes.filter(quote => quote.id != quoteId);
+
+          // Re-apply current filter
+          filterAndSearchQuotes();
 
           showSuccess('Deleted successfully');
 
