@@ -391,7 +391,7 @@ function showTypePopup(text, url, site, siteName) {
   const style = document.createElement('style');
   style.textContent = `
     .save-quote-popup {
-      position: fixed;
+      position: absolute;
       z-index: 999999;
       background: rgb(76, 63, 63);
       border-radius: 8px;
