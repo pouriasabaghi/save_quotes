@@ -716,7 +716,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       button.addEventListener('click', (e) => {
         e.stopPropagation();
         const quoteId = e.target.dataset.quoteId;
-        const quote = currentQuotes.find(q => q.id === quoteId);
+        const quote = currentQuotes.find(q => q.id == quoteId);
         if (!quote) return;
         
         const quoteLabels = quote.labels || [];
