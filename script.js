@@ -167,9 +167,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
   }
 
-  // Function to render labels filter panel
+  // Function to render labels filter
   function renderLabelsFilter() {
     if (!labelsFilterList) return;
+
+    if (!currentLabels || currentLabels.length === 0) {
+      labelsFilterList.innerHTML = `
+        <div class="empty-labels-message">
+          No labels yet! Go to Settings and create some labels to better organize your quotes.
+        </div>
+      `;
+      return;
+    }
 
     // Count quotes for each label
     const labelCounts = {};
@@ -404,6 +413,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  // Function to handle expand/collapse of text
+  function handleExpandCollapse(e) {
+    const button = e.currentTarget;
+    const textElement = button.closest('.text-container').querySelector('.text-line-overflow');
+    const isExpanded = textElement.classList.contains('expanded');
+    
+    // Toggle expanded state
+    textElement.classList.toggle('expanded');
+    button.classList.toggle('expanded');
+    
+    // Update button text
+    const textSpan = button.querySelector('.text');
+    textSpan.textContent = isExpanded ? 'Show More' : 'Show Less';
+  }
+
   /**
    * Generates the HTML for the entire list of saved quotes
    * Reverses the array to show newest quotes first
@@ -474,7 +498,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const typeClass = quote.type || 'quote';
     const textContent = quote.type === 'code' 
       ? `<pre class="code-block"><code>${escapeHtml(quote.text)}</code></pre>`
-      : `<p class="text-line-overflow">${quote.text}</p>`;
+      : `<div class="text-container">
+           <p class="text-line-overflow">${quote.text}</p>
+           <button class="expand-btn">
+             <span class="text">Show More</span>
+             <span class="icon">▼</span>
+           </button>
+         </div>`;
 
     const quoteLabels = quote.labels || [];
     const labelsHtml = quoteLabels.length ? `
@@ -526,8 +556,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
             </div>
             <small role="button" class='delete-quote' data-id="${quote.id}">
-                <img src="/delete.svg" alt="delete" />
-            </small>
+                 <img src="/delete.svg" alt="delete" />
+                 </small>
           </li>`;
   }
 
@@ -678,14 +708,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Create label selector dropdown
         const selectorContent = document.createElement('div');
         selectorContent.className = 'label-selector-content show';
-        selectorContent.innerHTML = currentLabels.map(label => `
+        selectorContent.innerHTML = currentLabels?.length ?currentLabels.map(label => `
           <div class="label-selector-item" data-label-id="${label.id}">
             <span class="color-dot" style="background-color: ${label.color}">
               <span class="label-name">${label.name}</span>
             </span>
             ${quoteLabels.includes(label.id) ? '✓' : ''}
           </div>
-        `).join('');
+        `).join('')
+        : `
+        <div class="empty-labels-message">
+          No labels yet! Go to Settings and create some labels to better organize your quotes.
+        </div>
+        `
+        ;
 
         // Position and show dropdown
         const buttonRect = button.getBoundingClientRect();
@@ -750,7 +786,175 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Add label selector events to quote items
+  // Function to handle highlighting selected quote
+  function handleHighlightAction(e) {
+    const li = e.target.closest("li");
+    const quoteText = li.querySelector("[data-quote]").dataset.quote;
+    
+    // Send message to content script to highlight the quote
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: "highlightQuote",
+        quoteText: quoteText,
+      });
+
+      window.close();
+    });
+  }
+
+  // Function to handle copying text
+  function handleCopy(e) {
+    const text = e.target.dataset.text;
+    // Decode HTML entities before copying
+    const decodedText = text.replace(/&quot;/g, '"')
+                           .replace(/&apos;/g, "'")
+                           .replace(/&lt;/g, '<')
+                           .replace(/&gt;/g, '>')
+                           .replace(/&amp;/g, '&')
+                           .replace(/&#10;/g, '\n')
+                           .replace(/&#13;/g, '\r');
+
+    navigator.clipboard.writeText(decodedText).then(() => {
+      // Change button text temporarily to show feedback
+      const button = e.target;
+      const originalText = button.textContent;
+      button.textContent = "Copied!";
+      button.classList.add("copied");
+      
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.classList.remove("copied");
+      }, 2000);
+    });
+  }
+
+  // Function to handle edit button click
+  function handleEdit(e) {
+    const quoteItem = e.target.closest(".quotes--item");
+    quoteItem.querySelector(".quotes--item-desc").classList.add("edit-mode");
+  }
+
+  // Function to handle cancel edit
+  function handleCancelEdit(e) {
+    const quoteItem = e.target.closest(".quotes--item");
+    const textarea = quoteItem.querySelector(".edit-textarea");
+    const originalText = textarea.dataset.originalText;
+    
+    // Reset textarea content
+    textarea.value = originalText;
+    
+    // Exit edit mode
+    quoteItem.querySelector(".quotes--item-desc").classList.remove("edit-mode");
+  }
+
+  // Function to handle save edit
+  async function handleSaveEdit(e) {
+    try {
+      const quoteItem = e.target.closest(".quotes--item");
+      const quoteId = quoteItem.querySelector(".delete-quote").dataset.id;
+      const textarea = quoteItem.querySelector(".edit-textarea");
+      const newText = textarea.value.trim();
+      
+      if (newText.length < 10) {
+        showError("Text must be at least 10 characters long");
+        return;
+      }
+
+      // Get current quotes
+      const quotes = await getFromStorage("quotes") || [];
+      const quoteIndex = quotes.findIndex(q => q.id === quoteId);
+      
+      if (quoteIndex === -1) {
+        throw new Error("Quote not found");
+      }
+
+      // Keep all existing properties and only update the text
+      const updatedQuote = {
+        ...quotes[quoteIndex],
+        text: newText
+      };
+
+      // Update the quote
+      quotes[quoteIndex] = updatedQuote;
+
+      // Save to storage
+      await new Promise((resolve, reject) => {
+        chrome.storage.local.set({ quotes }, () => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve();
+          }
+        });
+      });
+
+      // Update currentQuotes to match storage
+      currentQuotes = quotes;
+
+      // Update UI
+      const contentWrapper = quoteItem.querySelector(".content-wrapper");
+      const copyBtn = quoteItem.querySelector(".copy-btn");
+      const visitLink = quoteItem.querySelector(".quotes--item-link");
+      
+      // Generate labels HTML
+      const labelsHtml = updatedQuote.labels && updatedQuote.labels.length ? `
+        <div class="quote-labels">
+          ${updatedQuote.labels.map(labelId => {
+            const label = currentLabels.find(l => l.id === labelId);
+            if (!label) return '';
+            return `<span class="quote-label" style="background-color: ${label.color}">${label.name}</span>`;
+          }).join('')}
+        </div>
+      ` : '';
+
+      if (updatedQuote.type === 'code') {
+        contentWrapper.innerHTML = `
+          <pre class="code-block"><code>${escapeHtml(newText)}</code></pre>
+          ${labelsHtml}
+        `;
+      } else {
+        contentWrapper.innerHTML = `
+          <div class="text-container">
+            <p class="text-line-overflow">${newText}</p>
+            <button class="expand-btn">
+              <span class="text">Show More</span>
+              <span class="icon">▼</span>
+            </button>
+          </div>
+          ${labelsHtml}
+        `;
+        
+        // Re-add event listener for expand button
+        const expandButton = contentWrapper.querySelector('.expand-btn');
+        const textElement = contentWrapper.querySelector('.text-line-overflow');
+        
+        if (textElement.scrollHeight <= textElement.clientHeight) {
+          contentWrapper.classList.add('short-text');
+        } else {
+          expandButton.addEventListener("click", handleExpandCollapse);
+        }
+      }
+      
+      copyBtn.dataset.text = newText;
+      visitLink.dataset.quote = newText;
+      textarea.dataset.originalText = newText;
+
+      // Exit edit mode
+      quoteItem.querySelector(".quotes--item-desc").classList.remove("edit-mode");
+      
+      showSuccess("Changes saved successfully");
+
+      // Update labels filter panel if it exists
+      if (document.querySelector('.filter-btn[data-type="labels"].active')) {
+        renderLabelsFilter();
+      }
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      showError('Error saving changes');
+    }
+  }
+
+  // Function to add events to quote items
   function addEventsToQuoteItems() {
     // Add click handlers for quote links
     const quotesItems = document.querySelectorAll(".quotes--item a");
@@ -782,196 +986,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       button.addEventListener("click", handleSaveEdit);
     });
 
-    // Add click handlers for text expand/collapse
+    // Add click handlers for expand/collapse buttons
     const expandButtons = document.querySelectorAll(".expand-btn");
     expandButtons?.forEach(button => {
+      const textElement = button.closest('.text-container').querySelector('.text-line-overflow');
+      
       // Check if text needs expand button
-      const textElement = button.closest('.text-container').querySelector('.text-line-overflow');
-      const contentWrapper = button.closest('.content-wrapper');
-      
-      // Check if text is shorter than the container
       if (textElement.scrollHeight <= textElement.clientHeight) {
-        contentWrapper.classList.add('short-text');
-        return;
+        button.closest('.content-wrapper').classList.add('short-text');
+      } else {
+        button.addEventListener("click", handleExpandCollapse);
       }
-
-      button.addEventListener("click", handleExpandCollapse);
     });
-
-    // Highlight the selected quote in the original page
-    function handleHighlightAction(e) {
-      const li = e.target.closest("li");
-      const quoteText = li.querySelector("[data-quote]").dataset.quote;
-      
-      // Send message to content script to highlight the quote
-      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          action: "highlightQuote",
-          quoteText: quoteText,
-        });
-
-        window.close();
-      });
-    }
-
-    // Handle copying text
-    function handleCopy(e) {
-      const text = e.target.dataset.text;
-      // Decode HTML entities before copying
-      const decodedText = text.replace(/&quot;/g, '"')
-                             .replace(/&apos;/g, "'")
-                             .replace(/&lt;/g, '<')
-                             .replace(/&gt;/g, '>')
-                             .replace(/&amp;/g, '&')
-                             .replace(/&#10;/g, '\n')
-                             .replace(/&#13;/g, '\r');
-
-      navigator.clipboard.writeText(decodedText).then(() => {
-        // Change button text temporarily to show feedback
-        const button = e.target;
-        const originalText = button.textContent;
-        button.textContent = "Copied!";
-        button.classList.add("copied");
-        
-        setTimeout(() => {
-          button.textContent = originalText;
-          button.classList.remove("copied");
-        }, 2000);
-      });
-    }
-
-    // Handle edit button click
-    function handleEdit(e) {
-      const quoteItem = e.target.closest(".quotes--item");
-      quoteItem.querySelector(".quotes--item-desc").classList.add("edit-mode");
-    }
-
-    // Handle cancel edit
-    function handleCancelEdit(e) {
-      const quoteItem = e.target.closest(".quotes--item");
-      const textarea = quoteItem.querySelector(".edit-textarea");
-      const originalText = textarea.dataset.originalText;
-      
-      // Reset textarea content
-      textarea.value = originalText;
-      
-      // Exit edit mode
-      quoteItem.querySelector(".quotes--item-desc").classList.remove("edit-mode");
-    }
-
-    // Handle save edit
-    async function handleSaveEdit(e) {
-      try {
-        const quoteItem = e.target.closest(".quotes--item");
-        const quoteId = quoteItem.querySelector(".delete-quote").dataset.id;
-        const textarea = quoteItem.querySelector(".edit-textarea");
-        const newText = textarea.value.trim();
-        
-        if (newText.length < 10) {
-          showError("Text must be at least 10 characters long");
-          return;
-        }
-
-        // Get current quotes
-        const quotes = await getFromStorage("quotes") || [];
-        const quoteIndex = quotes.findIndex(q => q.id === quoteId);
-        
-        if (quoteIndex === -1) {
-          throw new Error("Quote not found");
-        }
-
-        // Keep all existing properties and only update the text
-        const updatedQuote = {
-          ...quotes[quoteIndex],
-          text: newText
-        };
-
-        // Update the quote
-        quotes[quoteIndex] = updatedQuote;
-
-        // Save to storage
-        await new Promise((resolve, reject) => {
-          chrome.storage.local.set({ quotes }, () => {
-            if (chrome.runtime.lastError) {
-              reject(chrome.runtime.lastError);
-            } else {
-              resolve();
-            }
-          });
-        });
-
-        // Update currentQuotes to match storage
-        currentQuotes = quotes;
-
-        // Update UI
-        const contentWrapper = quoteItem.querySelector(".content-wrapper");
-        const copyBtn = quoteItem.querySelector(".copy-btn");
-        const visitLink = quoteItem.querySelector(".quotes--item-link");
-        
-        // Generate labels HTML
-        const labelsHtml = updatedQuote.labels && updatedQuote.labels.length ? `
-          <div class="quote-labels">
-            ${updatedQuote.labels.map(labelId => {
-              const label = currentLabels.find(l => l.id === labelId);
-              if (!label) return '';
-              return `<span class="quote-label" style="background-color: ${label.color}">${label.name}</span>`;
-            }).join('')}
-          </div>
-        ` : '';
-
-        if (updatedQuote.type === 'code') {
-          contentWrapper.innerHTML = `
-            <pre class="code-block"><code>${escapeHtml(newText)}</code></pre>
-            ${labelsHtml}
-          `;
-        } else {
-          contentWrapper.innerHTML = `
-            <p class="text-line-overflow">${newText}</p>
-            ${labelsHtml}
-          `;
-          
-          // Re-add event listener for expand button if needed
-          const textElement = contentWrapper.querySelector('.text-line-overflow');
-          if (textElement.scrollHeight > textElement.clientHeight) {
-            contentWrapper.classList.remove('short-text');
-          } else {
-            contentWrapper.classList.add('short-text');
-          }
-        }
-        
-        copyBtn.dataset.text = newText;
-        visitLink.dataset.quote = newText;
-        textarea.dataset.originalText = newText;
-
-        // Exit edit mode
-        quoteItem.querySelector(".quotes--item-desc").classList.remove("edit-mode");
-        
-        showSuccess("Changes saved successfully");
-
-        // Update labels filter panel if it exists
-        if (document.querySelector('.filter-btn[data-type="labels"].active')) {
-          renderLabelsFilter();
-        }
-      } catch (error) {
-        console.error('Error saving changes:', error);
-        showError('Error saving changes');
-      }
-    }
-
-    // Handle text expand/collapse
-    function handleExpandCollapse(e) {
-      const button = e.currentTarget;
-      const textElement = button.closest('.text-container').querySelector('.text-line-overflow');
-      const isExpanded = textElement.classList.contains('expanded');
-      
-      // Toggle expanded state
-      textElement.classList.toggle('expanded');
-      button.classList.toggle('expanded');
-      
-      // Update button text
-      const textSpan = button.querySelector('.text');
-      textSpan.textContent = isExpanded ? 'Show More' : 'Show Less';
-    }
 
     // Add click handlers for delete buttons
     const deleteButtons = document.querySelectorAll(".delete-quote");
@@ -983,7 +1009,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           const quoteId = e.target.closest('[data-id]').dataset.id;
           const quotes = await getFromStorage("quotes") || [];
           const updatedQuotes = quotes.filter(quote => quote.id != quoteId);
-          console.log(quotes, updatedQuotes);
           
           await new Promise((resolve, reject) => {
             chrome.storage.local.set({ quotes: updatedQuotes }, () => {
