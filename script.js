@@ -880,8 +880,14 @@ document.addEventListener("DOMContentLoaded", async () => {
           throw new Error("Quote not found");
         }
 
+        // Keep all existing properties and only update the text
+        const updatedQuote = {
+          ...quotes[quoteIndex],
+          text: newText
+        };
+
         // Update the quote
-        quotes[quoteIndex].text = newText;
+        quotes[quoteIndex] = updatedQuote;
 
         // Save to storage
         await new Promise((resolve, reject) => {
@@ -894,32 +900,42 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
         });
 
+        // Update currentQuotes to match storage
+        currentQuotes = quotes;
+
         // Update UI
         const contentWrapper = quoteItem.querySelector(".content-wrapper");
         const copyBtn = quoteItem.querySelector(".copy-btn");
         const visitLink = quoteItem.querySelector(".quotes--item-link");
         
-        if (quotes[quoteIndex].type === 'code') {
-          contentWrapper.innerHTML = `<pre class="code-block"><code>${escapeHtml(newText)}</code></pre>`;
+        // Generate labels HTML
+        const labelsHtml = updatedQuote.labels && updatedQuote.labels.length ? `
+          <div class="quote-labels">
+            ${updatedQuote.labels.map(labelId => {
+              const label = currentLabels.find(l => l.id === labelId);
+              if (!label) return '';
+              return `<span class="quote-label" style="background-color: ${label.color}">${label.name}</span>`;
+            }).join('')}
+          </div>
+        ` : '';
+
+        if (updatedQuote.type === 'code') {
+          contentWrapper.innerHTML = `
+            <pre class="code-block"><code>${escapeHtml(newText)}</code></pre>
+            ${labelsHtml}
+          `;
         } else {
           contentWrapper.innerHTML = `
-            <div class="text-container">
-              <p class="text-line-overflow">${newText}</p>
-              <button class="expand-btn">
-                <span class="text">Show More</span>
-                <span class="icon">▼</span>
-              </button>
-            </div>
+            <p class="text-line-overflow">${newText}</p>
+            ${labelsHtml}
           `;
           
-          // Re-add event listener for expand button
-          const expandButton = contentWrapper.querySelector('.expand-btn');
+          // Re-add event listener for expand button if needed
           const textElement = contentWrapper.querySelector('.text-line-overflow');
-          
-          if (textElement.scrollHeight <= textElement.clientHeight) {
-            contentWrapper.classList.add('short-text');
+          if (textElement.scrollHeight > textElement.clientHeight) {
+            contentWrapper.classList.remove('short-text');
           } else {
-            expandButton.addEventListener("click", handleExpandCollapse);
+            contentWrapper.classList.add('short-text');
           }
         }
         
@@ -931,6 +947,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         quoteItem.querySelector(".quotes--item-desc").classList.remove("edit-mode");
         
         showSuccess("Changes saved successfully");
+
+        // Update labels filter panel if it exists
+        if (document.querySelector('.filter-btn[data-type="labels"].active')) {
+          renderLabelsFilter();
+        }
       } catch (error) {
         console.error('Error saving changes:', error);
         showError('Error saving changes');
