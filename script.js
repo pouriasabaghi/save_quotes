@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const restoreBtn = document.getElementById('restoreBtn');
   const labelsFilterPanel = document.getElementById('labelsFilterPanel');
   const labelsFilterList = document.getElementById('labelsFilterList');
-  const introMessage = `
+  const welcomeMessage = `
     <div class="welcome-container">
       <h2>🎉 Welcome to Save Quotes!</h2>
       <div class="welcome-content">
@@ -105,6 +105,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <li>🏷️ Create labels in Settings to organize your quotes</li>
           <li>⚙️ You can enable and disable popup in Settings</li>
           <li>🔍 Use the search bar to find specific quotes</li>
+          <li>🛡️ Your privacy matters, we don’t store any of your data on our servers, so only you have access to it. To transfer your data, simply create a lightweight backup file in a few clicks. Don’t worry, your existing data won’t be replaced, it will be safely merged.</li>
         </ul>
       </div>
     </div>
@@ -290,7 +291,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       quotesUl.innerHTML = quotes && quotes.length
         ? generateQuoteList(quotesToRender)
-        : introMessage;
+        : welcomeMessage;
 
       addEventsToQuoteItems();
     } catch (error) {
