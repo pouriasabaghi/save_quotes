@@ -66,6 +66,14 @@ function showSuccess(message, duration = 3000) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Initialize state variables
+  let currentQuotes = [];
+  let currentFilter = 'all';
+  const quotesUl = document.querySelector("#quotes");
+  const searchInput = document.getElementById('searchInput');
+  const searchBtn = document.getElementById('searchBtn');
+  const searchContainer = document.querySelector('.search-container');
+
   let currentUrl;
   try {
     currentUrl = await getCurrentTabUrl();
@@ -74,7 +82,54 @@ document.addEventListener("DOMContentLoaded", async () => {
     showError('Error accessing tab information');
   }
 
-  const quotesUl = document.querySelector("#quotes");
+  // Toggle search box
+  searchBtn.addEventListener('click', () => {
+    searchContainer.classList.toggle('hidden');
+    if (!searchContainer.classList.contains('hidden')) {
+      searchInput.focus();
+    }
+  });
+
+  // Debounce function for search
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Function to filter and search quotes
+  function filterAndSearchQuotes() {
+    const searchTerm = searchInput.value.toLowerCase();
+    let filteredQuotes = [...currentQuotes];
+
+    // Apply type filter if active
+    const activeTypeFilter = document.querySelector('.filter-btn.active').dataset.type;
+    if (activeTypeFilter !== 'all') {
+      filteredQuotes = filteredQuotes.filter(quote => quote.type === activeTypeFilter);
+    }
+
+    // Apply search term filter
+    if (searchTerm) {
+      filteredQuotes = filteredQuotes.filter(quote => 
+        quote.text.toLowerCase().includes(searchTerm) ||
+        quote.siteName.toLowerCase().includes(searchTerm) ||
+        quote.site.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // Render filtered quotes
+    if (filteredQuotes.length === 0) {
+      quotesUl.innerHTML = '<div class="no-results">No matching quotes found</div>';
+    } else {
+      renderQuotes(filteredQuotes);
+    }
+  }
 
   // Function to render quotes
   function renderQuotes(quotes) {
@@ -83,7 +138,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? generateQuoteList(quotes.reverse())
         : `<div class="intro">
               <p>You haven't saved any quotes yet.</p>
-              <p>  It's super easy! Just highlight a part of the text you want, then click 'Save icon' on the popup, or right-click and choose 'Save quote' from the menu. Ta-da!</p>
+              <p>It's super easy! Just highlight a part of the text you want, then click 'Save icon' on the popup, or right-click and choose 'Save quote' from the menu. Ta-da!</p>
            </div>`;
 
       addEventsToQuoteItems();
@@ -96,7 +151,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Load and display saved quotes from storage
   async function loadQuotes() {
     try {
-      const quotes = await getFromStorage("quotes");
+      const quotes = await getFromStorage("quotes") || [];
+      currentQuotes = quotes;
       renderQuotes(quotes);
     } catch (error) {
       console.error('Error loading quotes:', error);
@@ -200,7 +256,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Initialize filter buttons
   const filterButtons = document.querySelectorAll('.filter-btn');
-  let currentFilter = 'all';
 
   // Add click handlers to filter buttons
   filterButtons.forEach(button => {
@@ -213,25 +268,40 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       // Update current filter and apply it
       currentFilter = filterType;
-      applyFilter();
+      filterAndSearchQuotes();
     });
   });
 
-  // Function to apply the current filter
-  function applyFilter() {
-    try {
-      const items = document.querySelectorAll('.quotes--item');
-      items.forEach(item => {
-        const type = item.querySelector('.quotes--item-desc').classList[1].replace('-container', '');
-        if (currentFilter === 'all' || type === currentFilter) {
-          item.classList.remove('hidden');
-        } else {
-          item.classList.add('hidden');
-        }
-      });
-    } catch (error) {
-      console.error('Error applying filter:', error);
-      showError('Error filtering quotes');
+  // Search functionality
+  const searchField = document.getElementById('searchField');
+  const dateFilter = document.getElementById('dateFilter');
+
+  // Function to highlight matching text
+  function highlightMatches(text, searchTerm) {
+    if (!searchTerm) return text;
+    const regex = new RegExp(`(${searchTerm})`, 'gi');
+    return text.replace(regex, '<span class="highlight-match">$1</span>');
+  }
+
+  // Function to check if a date is within a specific range
+  function isDateInRange(dateStr, range) {
+    const date = new Date(dateStr);
+    const now = new Date();
+    
+    switch (range) {
+      case 'today':
+        return date.toDateString() === now.toDateString();
+      case 'week':
+        const weekAgo = new Date(now.setDate(now.getDate() - 7));
+        return date >= weekAgo;
+      case 'month':
+        const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+        return date >= monthAgo;
+      case 'year':
+        const yearAgo = new Date(now.setFullYear(now.getFullYear() - 1));
+        return date >= yearAgo;
+      default:
+        return true;
     }
   }
 
@@ -305,15 +375,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const typeClass = quote.type || 'quote';
     const textContent = quote.type === 'code' 
       ? `<pre class="code-block"><code>${escapeHtml(quote.text)}</code></pre>`
-      : `
-          <div class="text-container">
-            <p class="text-line-overflow">${quote.text}</p>
-            <button class="expand-btn">
-              <span class="text">Show More</span>
-              <span class="icon">▼</span>
-            </button>
-          </div>
-        `;
+      : `<p class="text-line-overflow">${quote.text}</p>`;
 
     return ` 
       <li class="quotes--item quotes--header-label">
@@ -740,4 +802,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       showError(error.message || 'Invalid backup data. Please check the JSON format.');
     }
   });
+
+  // Add event listeners for search and filters
+  searchInput.addEventListener('input', debounce(filterAndSearchQuotes, 300));
+  searchField.addEventListener('change', filterAndSearchQuotes);
+  dateFilter.addEventListener('change', filterAndSearchQuotes);
 });
