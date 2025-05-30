@@ -805,6 +805,4 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Add event listeners for search and filters
   searchInput.addEventListener('input', debounce(filterAndSearchQuotes, 300));
-  searchField.addEventListener('change', filterAndSearchQuotes);
-  dateFilter.addEventListener('change', filterAndSearchQuotes);
 });
