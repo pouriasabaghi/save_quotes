@@ -19,8 +19,8 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
     params.delete("quote");
     url.search = params.toString();
     url = url.toString();
-
-    // Check if there's selected text
+    
+    // Check if  there's selected text
     if (info.selectionText) {
       const site =
         new URL(tab.url).hostname.split(".").length > 2
@@ -30,7 +30,7 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
       // Send message to content script to show type selection popup
       chrome.tabs.sendMessage(tab.id, {
         action: "showTypePopup",
-        text: info.selectionText,
+        text: info.selectionText?.split(/\s{2,}/)?.join("\n"),
         url: info.frameUrl,
         site: site,
         siteName: site.replace("www.", "")
